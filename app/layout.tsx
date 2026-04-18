@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pandaneiros · Reservas",
-  description: "Reservas Peugeot 208",
+  title: "PYMS · WMS para Pymes",
+  description: "Gestión de stock, picking, packing y despacho para pymes. Simple, rápido, sin complejidad.",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent" },
 };
 

@@ -1,149 +1,233 @@
-'use client'
+import Link from 'next/link'
 
-import { Suspense, useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+const features = [
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+      </svg>
+    ),
+    title: 'Stock en tiempo real',
+    desc: 'Visibilidad exacta de tus unidades disponibles, en tránsito y con alerta de reposición.',
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+    title: 'Picking optimizado',
+    desc: 'Lista de picking generada automáticamente desde tus pedidos. Cada operador sabe qué buscar.',
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg>
+    ),
+    title: 'Packing y despacho',
+    desc: 'Confirma bultos, registra guías y sigue cada pedido hasta que salió de tu bodega.',
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    title: 'Equipo conectado',
+    desc: 'Hasta 5 usuarios por cuenta. Cada uno con acceso a la misma operación en tiempo real.',
+  },
+]
 
-function LoginForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(
-    searchParams.get('error') === 'no_access'
-      ? 'Tu cuenta no tiene acceso a esta app.'
-      : ''
-  )
-  const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
+const steps = [
+  {
+    n: '01',
+    title: 'Ingresa tus pedidos',
+    desc: 'Carga los pedidos del día. PYMS genera automáticamente el resumen de unidades necesarias.',
+  },
+  {
+    n: '02',
+    title: 'Gestiona stock y picking',
+    desc: 'Ve qué hay en stock, qué hay que reponer y asigna tareas de picking a tu equipo.',
+  },
+  {
+    n: '03',
+    title: 'Despacha con trazabilidad',
+    desc: 'Confirma packing, registra guías de despacho y cierra cada pedido con un clic.',
+  },
+]
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace('/dashboard')
-    })
-  }, [router])
+const planIncludes = [
+  'Gestión de stock ilimitada',
+  'Pedidos y picking diario',
+  'Control de packing y despacho',
+  'Dashboard con resumen operacional',
+  'Hasta 5 usuarios por cuenta',
+  'Soporte por email',
+]
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError('Email o contraseña incorrectos')
-      setLoading(false)
-    } else {
-      router.replace('/dashboard')
-    }
-  }
-
-  async function handleGoogle() {
-    setGoogleLoading(true)
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-  }
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17h8M5 9l1.5-4.5A1 1 0 017.447 4h9.106a1 1 0 01.947.672L19 9m-14 0h14m-14 0l-1 4h16l-1-4M6 17a2 2 0 01-2-2v-4h16v4a2 2 0 01-2 2" />
-            </svg>
+    <div className="bg-slate-950 text-white min-h-screen">
+
+      {/* NAVBAR */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur border-b border-white/5">
+        <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+              </svg>
+            </div>
+            <span className="font-black text-lg tracking-tight">PYMS</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Pandaneiros</h1>
-          <p className="text-slate-400 text-sm mt-1">Reservas · Peugeot 208</p>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 space-y-4">
-          {/* Google */}
-          <button
-            onClick={handleGoogle}
-            disabled={googleLoading}
-            className="w-full bg-white hover:bg-gray-50 text-gray-800 text-sm font-semibold py-2.5 rounded-xl transition-all active:scale-[.99] disabled:opacity-50 flex items-center justify-center gap-3"
-          >
-            {googleLoading ? (
-              <svg className="w-4 h-4 animate-spin text-gray-500" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-            )}
-            Entrar con Google
-          </button>
-
-          {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-slate-500">o</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
-          {/* Email + password */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full px-4 py-2.5 text-sm text-white bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition placeholder:text-slate-600"
-                placeholder="tu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                className="w-full px-4 py-2.5 text-sm text-white bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition placeholder:text-slate-600"
-                placeholder="••••••••"
-              />
-            </div>
-            {error && (
-              <p className="text-rose-400 text-xs text-center bg-rose-400/10 px-3 py-2 rounded-lg">{error}</p>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-all active:scale-[.99] disabled:opacity-50 flex items-center justify-center gap-2"
+            <Link
+              href="/login"
+              className="text-sm text-slate-400 hover:text-white transition-colors px-3 py-2"
             >
-              {loading ? (
-                <>
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-                  </svg>
-                  Entrando...
-                </>
-              ) : 'Entrar'}
-            </button>
-          </form>
+              Iniciar sesión
+            </Link>
+            <a
+              href="#pricing"
+              className="text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl transition-colors"
+            >
+              Comenzar
+            </a>
+          </div>
         </div>
-      </div>
-    </div>
-  )
-}
+      </nav>
 
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
+      {/* HERO */}
+      <section className="pt-32 pb-24 px-5">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-400 bg-indigo-950 border border-indigo-800/50 px-3 py-1.5 rounded-full mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+            WMS para Pymes chilenas
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-black leading-[1.05] tracking-tight mb-6">
+            Tu bodega bajo{' '}
+            <span className="text-indigo-400">control total</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto mb-10 leading-relaxed">
+            PYMS es el sistema de gestión de bodega diseñado para pymes. Stock, picking, packing y despacho en una sola herramienta, sin complejidad.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href="#pricing"
+              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-sm"
+            >
+              Empezar por $9.990/mes
+            </a>
+            <Link
+              href="/login"
+              className="w-full sm:w-auto text-slate-300 hover:text-white border border-white/10 hover:border-white/20 font-semibold px-8 py-3.5 rounded-xl transition-all text-sm"
+            >
+              Ya tengo cuenta
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section id="features" className="py-20 px-5 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-black tracking-tight mb-3">Todo lo que necesitas</h2>
+            <p className="text-slate-400 max-w-md mx-auto">Sin módulos de más, sin configuraciones interminables. Solo lo esencial para operar bien.</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {features.map((f) => (
+              <div key={f.title} className="bg-slate-900 border border-white/5 rounded-2xl p-6 hover:border-indigo-500/30 transition-colors">
+                <div className="w-11 h-11 rounded-xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center mb-4">
+                  {f.icon}
+                </div>
+                <h3 className="font-bold text-sm mb-2">{f.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CÓMO FUNCIONA */}
+      <section id="how" className="py-20 px-5 border-t border-white/5">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-black tracking-tight mb-3">Cómo funciona</h2>
+            <p className="text-slate-400">Tres pasos. Sin capacitaciones interminables.</p>
+          </div>
+          <div className="space-y-6">
+            {steps.map((s) => (
+              <div key={s.n} className="flex gap-6 items-start">
+                <div className="text-5xl font-black text-indigo-600/20 leading-none w-14 shrink-0 pt-1">{s.n}</div>
+                <div>
+                  <h3 className="font-bold text-base mb-1">{s.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="py-20 px-5 border-t border-white/5">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-black tracking-tight mb-3">Un plan, todo incluido</h2>
+            <p className="text-slate-400">Sin límites de SKUs ni de pedidos.</p>
+          </div>
+          <div className="bg-slate-900 border border-indigo-500/30 rounded-3xl p-8">
+            <div className="mb-6">
+              <div className="flex items-end gap-1 mb-1">
+                <span className="text-4xl font-black">$9.990</span>
+                <span className="text-slate-400 text-sm mb-1.5">CLP / mes</span>
+              </div>
+              <p className="text-slate-400 text-sm">Hasta 5 usuarios. Sin contrato mínimo.</p>
+            </div>
+            <ul className="space-y-3 mb-8">
+              {planIncludes.map((item) => (
+                <li key={item} className="flex items-center gap-3 text-sm text-slate-300">
+                  <svg className="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <a
+              href="mailto:contacto@pandaneiros.com?subject=Quiero%20suscribirme%20a%20PYMS"
+              className="block w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm py-3.5 rounded-xl text-center transition-colors"
+            >
+              Suscribirme ahora
+            </a>
+            <p className="text-center text-xs text-slate-500 mt-4">
+              Te contactamos en menos de 24 horas para activar tu cuenta.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-white/5 py-10 px-5">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+              </svg>
+            </div>
+            <span className="font-black text-sm tracking-tight">PYMS</span>
+            <span className="text-slate-600 text-xs">por Pandaneiros</span>
+          </div>
+          <p className="text-slate-600 text-xs">© 2025 Pandaneiros · pandaneiros.com</p>
+          <Link href="/login" className="text-xs text-slate-500 hover:text-white transition-colors">
+            Iniciar sesión
+          </Link>
+        </div>
+      </footer>
+
+    </div>
   )
 }

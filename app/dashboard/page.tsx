@@ -206,7 +206,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) { router.replace('/'); return }
+      if (!data.user) { router.replace('/login'); return }
       setUser(data.user)
       cargar()
     })
