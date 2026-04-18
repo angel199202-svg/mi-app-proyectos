@@ -16,13 +16,26 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, select, textarea {
+  font-size: 16px; /* prevents iOS zoom on focus */
 }
 
 @keyframes slideUp {
-  0%   { opacity: 0; transform: translateY(20px) scale(0.98); }
+  0%   { opacity: 0; transform: translateY(24px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal-slide-up {
-  animation: slideUp 0.2s ease-out both;
+  animation: slideUp 0.22s ease-out both;
+}
+
+.pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(3rem, env(safe-area-inset-top));
 }
