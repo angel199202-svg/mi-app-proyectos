@@ -163,11 +163,11 @@ create policy "owner delete invitations"
 -- invited user can read their own invite by token (for accept flow)
 create policy "read own invitation by email"
   on public.invitations for select
-  using (email = (select email from auth.users where id = auth.uid()));
+  using (email = auth.jwt() ->> 'email');
 
 create policy "accept own invitation"
   on public.invitations for update
-  using (email = (select email from auth.users where id = auth.uid()))
+  using (email = auth.jwt() ->> 'email')
   with check (accepted_at is not null);
 
 -- ─── POLICIES: products ───────────────────────────────────────────────────────
