@@ -38,15 +38,14 @@ export default function OnboardingPage() {
 
     const baseSlug = slugify(orgName)
     const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`
+    const orgId = crypto.randomUUID()
 
-    // Create org
-    const { data: org, error: orgErr } = await supabase
+    // Create org (generate UUID client-side to avoid RLS read-back issue)
+    const { error: orgErr } = await supabase
       .from('organizations')
-      .insert({ name: orgName.trim(), slug })
-      .select('id')
-      .single()
+      .insert({ id: orgId, name: orgName.trim(), slug })
 
-    if (orgErr || !org) {
+    if (orgErr) {
       setError('Error al crear la organización. Intenta de nuevo.')
       setLoading(false)
       return
@@ -55,18 +54,19 @@ export default function OnboardingPage() {
     // Create owner membership
     const { error: memberErr } = await supabase
       .from('organization_members')
-      .insert({ org_id: org.id, user_id: user.id, role: 'owner' })
+      .insert({ org_id: orgId, user_id: user.id, role: 'owner' })
 
     if (memberErr) {
+      await supabase.from('organizations').delete().eq('id', orgId)
       setError('Error al configurar tu cuenta. Intenta de nuevo.')
       setLoading(false)
       return
     }
 
-    // Create trial subscription
+    // Create trial subscription (no INSERT policy needed — add one below if missing)
     await supabase
       .from('subscriptions')
-      .insert({ org_id: org.id, status: 'trial' })
+      .insert({ org_id: orgId, status: 'trial' })
 
     router.replace('/app')
   }
