@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ===== Status dropdown ===== */
+@keyframes dropdownIn {
+  0%   { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.status-dropdown {
+  animation: dropdownIn 0.15s ease-out both;
+  transform-origin: top right;
+}
+
+/* ===== Efectos visuales ===== */
+
+/* 1. Nueva tarjeta: slide-in + bounce + glow */
+@keyframes slideInBounce {
+  0%   { opacity: 0; transform: translateY(-20px) scale(0.94); }
+  55%  { opacity: 1; transform: translateY(5px) scale(1.02); }
+  78%  { transform: translateY(-2px) scale(0.997); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes glowPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5), 0 1px 2px rgba(0,0,0,0.05); }
+  45%  { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.12), 0 4px 16px rgba(99, 102, 241, 0.28); }
+  100% { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+}
+
+.card-enter {
+  animation:
+    slideInBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    glowPulse 0.95s 0.05s ease-in-out both;
+}
+
+/* 2. Borrar: flash rojo + colapso */
+@keyframes collapseOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    max-height: 120px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-top: 12px;
+  }
+  18% {
+    background-color: #fef2f2;
+    border-color: #fca5a5;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    transform: scale(1.015) rotate(0deg);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.96) rotate(-0.5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85) rotate(1.5deg);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+  }
+}
+
+.card-exit {
+  animation: collapseOut 0.5s ease-in forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 3. Confetti burst desde botón */
+.confetti-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  animation: confettiPop 0.7s ease-out forwards;
+}
+
+@keyframes confettiPop {
+  0% {
+    transform: translate(-50%, -50%) translate(0px, 0px) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.1);
+    opacity: 0;
+  }
+}
