@@ -52,10 +52,10 @@ export default function LugarPage() {
             marginBottom: '20px',
           }}
         >
-          Valencia, Venezuela
+          Residencias Valle Alto
         </h1>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: '16px', color: 'var(--muted)', marginBottom: '6px' }}>
-          Valencia, Estado Carabobo
+          Residencias Valle Alto · Valencia, Estado Carabobo
         </p>
         <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '18px', color: 'var(--text)', opacity: 0.7 }}>
           Viernes · 17 de Julio, 2026 · 16:00 hrs
@@ -63,38 +63,47 @@ export default function LugarPage() {
       </section>
 
       {/* Map */}
-      <section style={{ background: 'var(--sand)', height: '420px', position: 'relative', overflow: 'hidden' }}>
-        {/*
-          TODO: Reemplaza este placeholder con un iframe de Google Maps:
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!...TU_EMBED_URL"
-            width="100%"
-            height="420"
-            style={{ border: 0 }}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        */}
-        <div
+      <section style={{ height: '420px', position: 'relative', overflow: 'hidden' }}>
+        <iframe
+          src="https://maps.google.com/maps?q=10.205088,-68.0246677&t=&z=17&ie=UTF8&iwloc=&output=embed"
+          width="100%"
+          height="420"
+          style={{ border: 0, display: 'block' }}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title="Residencias Valle Alto · Valencia, Venezuela"
+        />
+        {/* Overlay link */}
+        <a
+          href="https://maps.app.goo.gl/4QTX7FngyNwcEjnb7"
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
             position: 'absolute',
-            inset: 0,
+            bottom: '16px',
+            right: '16px',
+            background: 'var(--olive)',
+            color: 'var(--cream)',
+            fontFamily: 'var(--font-body)',
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            padding: '10px 18px',
+            borderRadius: '2px',
+            textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            gap: '12px',
-            background: 'var(--sand)',
+            gap: '6px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
           }}
         >
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.45 }}>
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#6a6b4b" strokeWidth="1.4" />
-            <circle cx="12" cy="9" r="2.5" stroke="#6a6b4b" strokeWidth="1.4" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="2" />
+            <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
           </svg>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.55 }}>
-            Agrega el mapa en app/lugar/page.tsx
-          </p>
-        </div>
+          Abrir en Google Maps
+        </a>
       </section>
 
       {/* Info cards */}
@@ -117,12 +126,12 @@ export default function LugarPage() {
             {
               icon: '🚗',
               title: 'Cómo llegar',
-              lines: ['[Instrucciones de acceso]', '[Referencia o hito]', 'Coordenadas disponibles pronto'],
+              lines: ['Residencias Valle Alto', 'Valencia, Estado Carabobo', 'Ver en Google Maps →'],
             },
             {
-              icon: '🅿️',
-              title: 'Estacionamiento',
-              lines: ['[Disponibilidad]', '[Instrucciones especiales]'],
+              icon: '📍',
+              title: 'Coordenadas',
+              lines: ['10.205088, -68.024667', 'Valencia, Venezuela'],
             },
           ].map((card) => (
             <div key={card.title} className="info-card">

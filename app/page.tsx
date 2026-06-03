@@ -465,8 +465,8 @@ export default function WeddingPage() {
                 {
                   icon: '📍',
                   label: 'Lugar',
-                  value: 'Valencia',
-                  sub: 'Venezuela',
+                  value: 'Res. Valle Alto',
+                  sub: 'Valencia, Venezuela',
                 },
               ].map((item, i) => (
                 <RevealSection key={item.label} delay={i * 120}>
@@ -650,8 +650,7 @@ export default function WeddingPage() {
                   marginBottom: '12px',
                 }}
               >
-                {/* TODO: reemplaza con la dirección real */}
-                [Nombre del lugar]
+                Residencias Valle Alto
               </p>
               <p
                 style={{
@@ -662,7 +661,7 @@ export default function WeddingPage() {
                   marginBottom: '36px',
                 }}
               >
-                [Dirección completa · Ciudad]
+                Valencia, Estado Carabobo · Venezuela
               </p>
 
               {/* Map placeholder */}
