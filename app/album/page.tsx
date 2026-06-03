@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type Photo = {
@@ -12,197 +13,172 @@ type Photo = {
   sort_order: number
 }
 
-/* ─── Lightbox ──────────────────────────────────────────── */
-function Lightbox({
-  photos,
-  index,
-  onClose,
-}: {
-  photos: Photo[]
-  index: number
-  onClose: () => void
-}) {
-  const [cur, setCur] = useState(index)
-  const photo = photos[cur]
+/* ─── Carousel ──────────────────────────────────────────── */
+function Carousel({ photos }: { photos: Photo[] }) {
+  const [current, setCurrent] = useState(0)
+  const [transitioning, setTransitioning] = useState(false)
+  const [paused, setPaused] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  function goTo(idx: number) {
+    if (transitioning || idx === current) return
+    setTransitioning(true)
+    setTimeout(() => {
+      setCurrent((idx + photos.length) % photos.length)
+      setTransitioning(false)
+    }, 380)
+  }
+
+  function next() { goTo(current + 1) }
+  function prev() { goTo(current - 1) }
+
+  /* auto-advance */
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft') setCur((i) => Math.max(0, i - 1))
-      if (e.key === 'ArrowRight') setCur((i) => Math.min(photos.length - 1, i + 1))
+    if (paused || photos.length <= 1) return
+    timerRef.current = setTimeout(next, 6000)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  })
+
+  /* keyboard */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') prev()
+      if (e.key === 'ArrowRight') next()
     }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose, photos.length])
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  })
+
+  const photo = photos[current]
 
   return (
     <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(32, 31, 22, 0.93)',
-        zIndex: 50, display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        padding: '20px',
-        animation: 'fade-in 0.2s ease-out both',
-      }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      style={{ width: '100%', maxWidth: 860, margin: '0 auto', userSelect: 'none' }}
     >
-      <button
-        onClick={onClose}
-        style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: 'var(--cream)', fontSize: '28px', cursor: 'pointer', opacity: 0.7, lineHeight: 1 }}
-      >×</button>
-
-      {cur > 0 && (
-        <button onClick={(e) => { e.stopPropagation(); setCur((i) => i - 1) }} style={{ position: 'absolute', left: 16, background: 'rgba(250,249,247,0.12)', border: '1px solid rgba(250,249,247,0.2)', color: 'var(--cream)', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }}>‹</button>
-      )}
-
-      <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '85vh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      {/* Photo frame */}
+      <div
+        style={{
+          position: 'relative',
+          background: 'var(--warm)',
+          borderRadius: 6,
+          overflow: 'hidden',
+          boxShadow: '0 12px 48px rgba(58,58,40,0.14)',
+        }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo.public_url} alt={photo.caption ?? ''} style={{ maxWidth: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: 3, boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }} />
-        {photo.caption && <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 15, color: 'var(--sand)', opacity: 0.85 }}>{photo.caption}</p>}
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, color: 'var(--sand)', opacity: 0.35, letterSpacing: '0.1em' }}>{cur + 1} / {photos.length}</p>
+        <img
+          key={current}
+          src={photo.public_url}
+          alt={photo.caption ?? ''}
+          style={{
+            width: '100%',
+            maxHeight: '72vh',
+            minHeight: 260,
+            objectFit: 'contain',
+            display: 'block',
+            background: 'var(--cream)',
+            opacity: transitioning ? 0 : 1,
+            transform: transitioning ? 'scale(0.985)' : 'scale(1)',
+            transition: 'opacity 0.38s ease, transform 0.38s ease',
+          }}
+        />
+
+        {/* Prev */}
+        {photos.length > 1 && (
+          <button
+            onClick={prev}
+            aria-label="Anterior"
+            style={{
+              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(250,249,247,0.85)', border: '1px solid rgba(196,191,172,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: 'var(--olive)',
+              transition: 'background 0.2s, transform 0.15s',
+              backdropFilter: 'blur(4px)',
+            }}
+            onMouseOver={(e) => { (e.currentTarget.style.background = 'rgba(250,249,247,1)'); (e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)') }}
+            onMouseOut={(e) => { (e.currentTarget.style.background = 'rgba(250,249,247,0.85)'); (e.currentTarget.style.transform = 'translateY(-50%) scale(1)') }}
+          >
+            <ChevronLeft size={18} strokeWidth={1.8} />
+          </button>
+        )}
+
+        {/* Next */}
+        {photos.length > 1 && (
+          <button
+            onClick={next}
+            aria-label="Siguiente"
+            style={{
+              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(250,249,247,0.85)', border: '1px solid rgba(196,191,172,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: 'var(--olive)',
+              transition: 'background 0.2s, transform 0.15s',
+              backdropFilter: 'blur(4px)',
+            }}
+            onMouseOver={(e) => { (e.currentTarget.style.background = 'rgba(250,249,247,1)'); (e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)') }}
+            onMouseOut={(e) => { (e.currentTarget.style.background = 'rgba(250,249,247,0.85)'); (e.currentTarget.style.transform = 'translateY(-50%) scale(1)') }}
+          >
+            <ChevronRight size={18} strokeWidth={1.8} />
+          </button>
+        )}
+
+        {/* Counter */}
+        {photos.length > 1 && (
+          <div style={{
+            position: 'absolute', bottom: 12, right: 16,
+            fontFamily: 'var(--font-body)', fontSize: 11,
+            letterSpacing: '0.1em', color: 'var(--warm)',
+            background: 'rgba(58,58,40,0.45)', backdropFilter: 'blur(4px)',
+            padding: '4px 10px', borderRadius: 20,
+          }}>
+            {current + 1} / {photos.length}
+          </div>
+        )}
       </div>
 
-      {cur < photos.length - 1 && (
-        <button onClick={(e) => { e.stopPropagation(); setCur((i) => i + 1) }} style={{ position: 'absolute', right: 16, background: 'rgba(250,249,247,0.12)', border: '1px solid rgba(250,249,247,0.2)', color: 'var(--cream)', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }}>›</button>
+      {/* Caption */}
+      <div style={{ minHeight: 32, padding: '14px 0 8px', textAlign: 'center' }}>
+        {photo.caption && (
+          <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 17, color: 'var(--text)', opacity: 0.75 }}>
+            {photo.caption}
+          </p>
+        )}
+      </div>
+
+      {/* Dots */}
+      {photos.length > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, paddingTop: 4 }}>
+          {photos.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Foto ${i + 1}`}
+              style={{
+                width: i === current ? 22 : 7,
+                height: 7,
+                borderRadius: 4,
+                background: i === current ? 'var(--olive)' : 'var(--sand)',
+                border: 'none', padding: 0, cursor: 'pointer',
+                transition: 'width 0.3s ease, background 0.2s',
+              }}
+            />
+          ))}
+        </div>
       )}
     </div>
   )
 }
 
-/* ─── Slot type ─────────────────────────────────────────── */
-type Slot = { photoIdx: number; entering: boolean; leaving: boolean }
-
-const GRID_LAYOUT = [
-  { gridColumn: '1', gridRow: '1 / span 2', aspectRatio: '3/4' },
-  { gridColumn: '2', gridRow: '1', aspectRatio: '4/3' },
-  { gridColumn: '3', gridRow: '1', aspectRatio: '4/3' },
-  { gridColumn: '2', gridRow: '2', aspectRatio: '4/3' },
-  { gridColumn: '3', gridRow: '2 / span 2', aspectRatio: '3/4' },
-  { gridColumn: '1 / span 2', gridRow: '3', aspectRatio: '16/7' },
-]
-
-/* ─── Animated photo wall ───────────────────────────────── */
-function PhotoWall({ photos, onPhotoClick }: { photos: Photo[]; onPhotoClick: (idx: number) => void }) {
-  const VISIBLE = Math.min(photos.length, GRID_LAYOUT.length)
-
-  const [slots, setSlots] = useState<Slot[]>(() =>
-    Array.from({ length: VISIBLE }, (_, i) => ({ photoIdx: i % photos.length, entering: false, leaving: false }))
-  )
-
-  useEffect(() => {
-    if (photos.length <= VISIBLE) return
-
-    let timer: ReturnType<typeof setTimeout>
-
-    function swapOne() {
-      const slotIdx = Math.floor(Math.random() * VISIBLE)
-
-      /* fade out */
-      setSlots((prev) => {
-        const next = [...prev]
-        next[slotIdx] = { ...next[slotIdx], leaving: true }
-        return next
-      })
-
-      /* after leave, swap photo */
-      setTimeout(() => {
-        setSlots((prev) => {
-          const showing = new Set(prev.map((s) => s.photoIdx))
-          const pool = photos.map((_, i) => i).filter((i) => !showing.has(i))
-          if (pool.length === 0) {
-            const next = [...prev]
-            next[slotIdx] = { ...next[slotIdx], leaving: false }
-            return next
-          }
-          const newIdx = pool[Math.floor(Math.random() * pool.length)]
-          const next = [...prev]
-          next[slotIdx] = { photoIdx: newIdx, entering: true, leaving: false }
-          return next
-        })
-
-        /* clear entering */
-        setTimeout(() => {
-          setSlots((prev) => {
-            const next = [...prev]
-            if (next[slotIdx]) next[slotIdx] = { ...next[slotIdx], entering: false }
-            return next
-          })
-
-          /* schedule next swap only after this one is fully done */
-          timer = setTimeout(swapOne, 4500 + Math.random() * 4500)
-        }, 1000)
-      }, 700)
-    }
-
-    /* first swap after a calm 3s */
-    timer = setTimeout(swapOne, 3000)
-    return () => clearTimeout(timer)
-  }, [photos, VISIBLE])
-
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gridTemplateRows: 'auto auto auto',
-        gap: 10,
-        maxWidth: 920,
-        margin: '0 auto',
-      }}
-    >
-      {slots.map((slot, i) => {
-        const photo = photos[slot.photoIdx]
-        const layout = GRID_LAYOUT[i]
-        return (
-          <div
-            key={i}
-            onClick={() => onPhotoClick(slot.photoIdx)}
-            style={{
-              gridColumn: layout.gridColumn,
-              gridRow: layout.gridRow,
-              aspectRatio: layout.aspectRatio,
-              borderRadius: 4,
-              overflow: 'hidden',
-              cursor: 'pointer',
-              background: 'var(--sand)',
-              opacity: slot.leaving ? 0 : 1,
-              transform: slot.leaving
-                ? 'scale(0.96) translateY(6px)'
-                : slot.entering
-                  ? 'scale(1.01)'
-                  : 'scale(1)',
-              transition: slot.leaving
-                ? 'opacity 0.65s ease, transform 0.65s ease'
-                : 'opacity 0.95s ease, transform 0.95s ease',
-              boxShadow: '0 4px 20px rgba(58,58,40,0.12)',
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photo.public_url}
-              alt={photo.caption ?? ''}
-              style={{
-                width: '100%', height: '100%',
-                objectFit: 'cover', display: 'block',
-                transition: 'transform 0.4s ease',
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.04)')}
-              onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-            />
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ─── Main page ─────────────────────────────────────────── */
+/* ─── Page ──────────────────────────────────────────────── */
 export default function AlbumPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [lightbox, setLightbox] = useState<number | null>(null)
 
   useEffect(() => {
     supabase
@@ -220,50 +196,58 @@ export default function AlbumPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)' }}>
 
-      <Link href="/" style={{ position: 'fixed', top: 24, left: 24, fontFamily: 'var(--font-body)', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.65, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, zIndex: 10 }}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M6 2L1 7l5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+      <Link
+        href="/"
+        style={{
+          position: 'fixed', top: 24, left: 24, zIndex: 10,
+          fontFamily: 'var(--font-body)', fontSize: 11, letterSpacing: '0.12em',
+          textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.65,
+          textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6,
+        }}
+      >
+        <ChevronLeft size={14} strokeWidth={1.8} />
         Inicio
       </Link>
 
       {/* Header */}
       <section style={{ padding: '100px 24px 48px', textAlign: 'center', background: 'var(--warm)', borderBottom: '1px solid var(--sand)' }}>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>Nuestros momentos</p>
-        <h1 style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(48px, 10vw, 80px)', color: 'var(--olive)', marginBottom: 8 }}>Nuestro álbum</h1>
-        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 17, color: 'var(--muted)' }}>Momentos que nos llevaron hasta aquí</p>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+          Nuestros momentos
+        </p>
+        <h1 style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(48px, 10vw, 80px)', color: 'var(--olive)', marginBottom: 8 }}>
+          Nuestro álbum
+        </h1>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 17, color: 'var(--muted)' }}>
+          Momentos que nos llevaron hasta aquí
+        </p>
       </section>
 
-      {/* Gallery */}
+      {/* Carousel */}
       <section style={{ padding: '48px 20px 80px' }}>
         {loading && (
-          <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--muted)', padding: '80px 0' }}>Cargando álbum...</p>
+          <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--muted)', padding: '80px 0' }}>
+            Cargando álbum...
+          </p>
         )}
-
         {error && (
-          <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 13, color: '#8B2020', padding: '80px 0' }}>Error: {error}</p>
+          <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 13, color: '#8B2020', padding: '40px 0' }}>
+            Error al cargar fotos: {error}
+          </p>
         )}
-
         {!loading && !error && photos.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 22, color: 'var(--muted)', marginBottom: 12 }}>El álbum está esperando sus fotos</p>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--muted)', opacity: 0.7 }}>Las fotos serán agregadas pronto</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 22, color: 'var(--muted)', marginBottom: 8 }}>
+              El álbum está esperando sus fotos
+            </p>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--muted)', opacity: 0.7 }}>
+              Pronto habrá fotos aquí
+            </p>
           </div>
         )}
-
-        {!loading && !error && photos.length === 1 && (
-          <div style={{ maxWidth: 400, margin: '0 auto', cursor: 'pointer' }} onClick={() => setLightbox(0)}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photos[0].public_url} alt={photos[0].caption ?? ''} style={{ width: '100%', borderRadius: 4, display: 'block' }} />
-          </div>
-        )}
-
-        {!loading && !error && photos.length >= 2 && (
-          <PhotoWall photos={photos} onPhotoClick={(idx) => setLightbox(idx)} />
+        {!loading && !error && photos.length > 0 && (
+          <Carousel photos={photos} />
         )}
       </section>
-
-      {lightbox !== null && photos.length > 0 && (
-        <Lightbox photos={photos} index={lightbox} onClose={() => setLightbox(null)} />
-      )}
     </div>
   )
 }
