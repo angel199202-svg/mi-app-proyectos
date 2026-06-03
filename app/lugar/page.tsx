@@ -210,27 +210,27 @@ export default function LugarPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
               {
-                icon: <LeafIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
+                icon: <LeafIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
                 title: 'Es un encuentro, no una fiesta',
                 body: 'No habrá música a alto volumen ni baile prolongado. Es un momento íntimo para compartir, conversar y celebrar juntos de manera tranquila.',
               },
               {
-                icon: <PhoneOffIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
+                icon: <PhoneOffIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
                 title: 'Momento sin pantallas (durante la ceremonia)',
                 body: 'Durante la ceremonia pedimos que los teléfonos queden guardados. Queremos que todos estén presentes en ese momento tan especial. Habrá tiempo para fotos después.',
               },
               {
-                icon: <WineIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
+                icon: <WineIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
                 title: 'Alcohol responsable',
                 body: 'Habrá vino y algo de alcohol disponible, pero queremos una celebración consciente. Apreciamos que cada persona tome sus propias decisiones al respecto.',
               },
               {
-                icon: <NoChildIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
+                icon: <NoChildIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
                 title: 'Evento para adultos',
                 body: 'Para mantener la atmósfera que buscamos, es un evento solo para adultos. Te pedimos considerar esto al planificar tu asistencia.',
               },
               {
-                icon: <GiftIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
+                icon: <GiftIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
                 title: 'Los regalos no son necesarios',
                 body: 'Su presencia es el mejor regalo. Si desean contribuir de alguna manera, en breve compartiremos una lista de deseos para quienes insistan.',
               },
