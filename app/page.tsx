@@ -665,30 +665,17 @@ export default function WeddingPage() {
                 Valencia, Estado Carabobo · Venezuela
               </p>
 
-              {/* Map placeholder */}
-              <div
-                style={{
-                  width: '100%',
-                  height: '240px',
-                  background: 'var(--sand)',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '32px',
-                  border: '1px solid var(--sand)',
-                  opacity: 0.7,
-                }}
-              >
-                <div style={{ textAlign: 'center' }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 8px', display: 'block' }}>
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#6a6b4b" strokeWidth="1.5" fill="none" opacity="0.6" />
-                    <circle cx="12" cy="9" r="2.5" stroke="#6a6b4b" strokeWidth="1.5" opacity="0.6" />
-                  </svg>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--olive)', letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.7 }}>
-                    Mapa disponible en breve
-                  </p>
-                </div>
+              {/* Map embed */}
+              <div style={{ width: '100%', height: '240px', borderRadius: '4px', overflow: 'hidden', marginBottom: '32px', position: 'relative' }}>
+                <iframe
+                  src="https://maps.google.com/maps?q=10.205088,-68.0246677&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                  width="100%"
+                  height="240"
+                  style={{ border: 0, display: 'block' }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Residencias Valle Alto"
+                />
               </div>
 
               <Link href="/lugar" className="btn-outline">
