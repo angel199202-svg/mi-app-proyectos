@@ -1,3 +1,5 @@
+'use client'
+
 import { PeopleIcon, CameraIcon, GlobeIcon } from '../components/Icons'
 'use client'
 
