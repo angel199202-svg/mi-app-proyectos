@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -90,64 +90,55 @@ function PhotoWall({ photos, onPhotoClick }: { photos: Photo[]; onPhotoClick: (i
     Array.from({ length: VISIBLE }, (_, i) => ({ photoIdx: i % photos.length, entering: false, leaving: false }))
   )
 
-  const rotateSlot = useCallback((slotIndex: number) => {
-    const DELAY = 1800 + Math.random() * 3000
+  useEffect(() => {
+    if (photos.length <= VISIBLE) return
 
-    return setTimeout(() => {
-      /* mark leaving */
+    let timer: ReturnType<typeof setTimeout>
+
+    function swapOne() {
+      const slotIdx = Math.floor(Math.random() * VISIBLE)
+
+      /* fade out */
       setSlots((prev) => {
         const next = [...prev]
-        next[slotIndex] = { ...next[slotIndex], leaving: true }
+        next[slotIdx] = { ...next[slotIdx], leaving: true }
         return next
       })
 
-      /* swap after leave anim */
+      /* after leave, swap photo */
       setTimeout(() => {
         setSlots((prev) => {
           const showing = new Set(prev.map((s) => s.photoIdx))
           const pool = photos.map((_, i) => i).filter((i) => !showing.has(i))
-          if (pool.length === 0) return prev.map((s, i) => i === slotIndex ? { ...s, leaving: false } : s)
+          if (pool.length === 0) {
+            const next = [...prev]
+            next[slotIdx] = { ...next[slotIdx], leaving: false }
+            return next
+          }
           const newIdx = pool[Math.floor(Math.random() * pool.length)]
           const next = [...prev]
-          next[slotIndex] = { photoIdx: newIdx, entering: true, leaving: false }
+          next[slotIdx] = { photoIdx: newIdx, entering: true, leaving: false }
           return next
         })
 
-        /* clear entering flag */
+        /* clear entering */
         setTimeout(() => {
           setSlots((prev) => {
             const next = [...prev]
-            next[slotIndex] = { ...next[slotIndex], entering: false }
+            if (next[slotIdx]) next[slotIdx] = { ...next[slotIdx], entering: false }
             return next
           })
-        }, 700)
-      }, 500)
-    }, DELAY)
-  }, [photos])
 
-  useEffect(() => {
-    if (photos.length <= VISIBLE) return
-
-    const timers: ReturnType<typeof setTimeout>[] = []
-
-    for (let i = 0; i < VISIBLE; i++) {
-      /* stagger start */
-      const startTimer = setTimeout(() => {
-        function scheduleNext(slotIdx: number) {
-          const t = rotateSlot(slotIdx)
-          timers.push(t)
-          /* chain: after leave(500) + enter(700) + delay schedule next */
-          const chainTimer = setTimeout(() => scheduleNext(slotIdx), 1800 + Math.random() * 3000 + 1200)
-          timers.push(chainTimer)
-        }
-        scheduleNext(i)
-      }, i * 600 + Math.random() * 800)
-
-      timers.push(startTimer)
+          /* schedule next swap only after this one is fully done */
+          timer = setTimeout(swapOne, 4500 + Math.random() * 4500)
+        }, 1000)
+      }, 700)
     }
 
-    return () => timers.forEach(clearTimeout)
-  }, [photos, VISIBLE, rotateSlot])
+    /* first swap after a calm 3s */
+    timer = setTimeout(swapOne, 3000)
+    return () => clearTimeout(timer)
+  }, [photos, VISIBLE])
 
   return (
     <div
@@ -177,13 +168,13 @@ function PhotoWall({ photos, onPhotoClick }: { photos: Photo[]; onPhotoClick: (i
               background: 'var(--sand)',
               opacity: slot.leaving ? 0 : 1,
               transform: slot.leaving
-                ? 'scale(0.94) translateY(8px)'
+                ? 'scale(0.96) translateY(6px)'
                 : slot.entering
-                  ? 'scale(1.02)'
+                  ? 'scale(1.01)'
                   : 'scale(1)',
               transition: slot.leaving
-                ? 'opacity 0.45s ease, transform 0.45s ease'
-                : 'opacity 0.65s ease, transform 0.65s ease',
+                ? 'opacity 0.65s ease, transform 0.65s ease'
+                : 'opacity 0.95s ease, transform 0.95s ease',
               boxShadow: '0 4px 20px rgba(58,58,40,0.12)',
             }}
           >

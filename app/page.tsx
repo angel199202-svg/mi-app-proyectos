@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { FloatingPetals } from './components/FloatingPetals'
 import { RevealSection } from './components/RevealSection'
 import { CalendarIcon, ClockIcon, PinIcon, HangerIcon, LeafIcon, PhoneOffIcon } from './components/Icons'
+import { supabase } from '@/lib/supabase'
 
 /* ─── SVG Decorations ───────────────────────────────── */
 function BotanicalSprig({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
@@ -145,6 +146,17 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
 /* ─── Main Page ─────────────────────────────────────── */
 export default function WeddingPage() {
   const [envelopeDone, setEnvelopeDone] = useState(false)
+  const [previewPhotos, setPreviewPhotos] = useState<{ id: string; public_url: string; caption: string | null }[]>([])
+
+  useEffect(() => {
+    supabase
+      .from('wedding_photos')
+      .select('id, public_url, caption, is_featured')
+      .order('is_featured', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .limit(6)
+      .then(({ data }) => { if (data) setPreviewPhotos(data) })
+  }, [])
 
   return (
     <>
@@ -804,7 +816,7 @@ export default function WeddingPage() {
                 Nuestro álbum
               </h2>
 
-              {/* Album grid placeholder */}
+              {/* Album preview grid */}
               <div
                 style={{
                   display: 'grid',
@@ -813,26 +825,40 @@ export default function WeddingPage() {
                   marginBottom: '36px',
                 }}
               >
-                {[1, 2, 3, 4, 5, 6].map((n) => (
-                  <div
-                    key={n}
-                    style={{
-                      aspectRatio: n % 3 === 0 ? '1 / 1.3' : '1 / 1',
-                      background: n % 2 === 0 ? 'var(--rose)' : 'var(--cream)',
-                      borderRadius: '3px',
-                      opacity: 0.55,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" opacity="0.4">
-                      <rect x="3" y="3" width="18" height="18" rx="2" stroke="#6a6b4b" strokeWidth="1.3" />
-                      <circle cx="8.5" cy="8.5" r="2" stroke="#6a6b4b" strokeWidth="1.3" />
-                      <path d="M21 15l-5-5L5 21" stroke="#6a6b4b" strokeWidth="1.3" />
-                    </svg>
-                  </div>
-                ))}
+                {previewPhotos.length > 0
+                  ? previewPhotos.map((photo, n) => (
+                      <Link
+                        key={photo.id}
+                        href="/album"
+                        style={{
+                          aspectRatio: n % 3 === 0 ? '1 / 1.3' : '1 / 1',
+                          borderRadius: '3px',
+                          overflow: 'hidden',
+                          display: 'block',
+                          background: 'var(--sand)',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photo.public_url}
+                          alt={photo.caption ?? ''}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease' }}
+                          onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                          onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                        />
+                      </Link>
+                    ))
+                  : [1, 2, 3, 4, 5, 6].map((n) => (
+                      <div
+                        key={n}
+                        style={{
+                          aspectRatio: n % 3 === 0 ? '1 / 1.3' : '1 / 1',
+                          background: n % 2 === 0 ? 'var(--rose)' : 'var(--cream)',
+                          borderRadius: '3px',
+                          opacity: 0.4,
+                        }}
+                      />
+                    ))}
               </div>
 
               <Link href="/album" className="btn-primary">
