@@ -235,7 +235,7 @@ export default function LugarPage() {
                 body: 'Su presencia es el mejor regalo. Si desean contribuir de alguna manera, en breve compartiremos una lista de deseos para quienes insistan.',
               },
               {
-                icon: <ClockIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
+                icon: <ClockIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
                 title: 'Puntualidad',
                 body: 'Te pedimos llegar a tiempo. La ceremonia comenzará a la hora indicada y no queremos interrupciones.',
               },
