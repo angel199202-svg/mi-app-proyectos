@@ -17,12 +17,13 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const inviteToken = searchParams.get('invite')
+  const nextPath = searchParams.get('next') ?? '/app'
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace('/app')
+      if (data.session) router.replace(nextPath)
     })
-  }, [router])
+  }, [router, nextPath])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -33,7 +34,7 @@ function LoginForm() {
       setError('Email o contraseña incorrectos')
       setLoading(false)
     } else {
-      router.replace(inviteToken ? `/auth/callback?invite=${inviteToken}` : '/app')
+      router.replace(inviteToken ? `/auth/callback?invite=${inviteToken}` : nextPath)
     }
   }
 
