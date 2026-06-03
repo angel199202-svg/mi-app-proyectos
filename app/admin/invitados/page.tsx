@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { LinkIcon, EditIcon, TrashIcon, ChatIcon, CelebrationIcon, HeartEnvelopeIcon, CheckIcon } from '../../components/Icons'
 
 type Guest = {
   id: string
@@ -251,7 +252,7 @@ export default function InvitadosPage() {
 
                 {/* Message */}
                 <span title={g.rsvp_message ?? ''} style={{ fontSize: '16px', textAlign: 'center', cursor: g.rsvp_message ? 'help' : 'default' }}>
-                  {g.rsvp_message ? '💬' : '–'}
+                  {g.rsvp_message ? <ChatIcon size={14} color='var(--olive)' strokeWidth={1.5} /> : <span style={{ color: 'var(--muted)', fontSize: '14px' }}>–</span>}
                 </span>
 
                 {/* Actions */}
@@ -261,14 +262,14 @@ export default function InvitadosPage() {
                     title="Copiar link de invitación"
                     style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px' }}
                   >
-                    {copied === g.code ? '✓' : '🔗'}
+                    {copied === g.code ? <CheckIcon size={14} color='var(--olive)' strokeWidth={2.5} /> : <LinkIcon size={14} color='var(--olive)' strokeWidth={1.5} />}
                   </button>
                   <button
                     onClick={() => openEdit(g)}
                     title="Editar"
                     style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px' }}
                   >
-                    ✏️
+                    <EditIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => handleDelete(g.id)}
@@ -276,7 +277,7 @@ export default function InvitadosPage() {
                     disabled={deleting === g.id}
                     style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px', opacity: deleting === g.id ? 0.4 : 1 }}
                   >
-                    🗑
+                    <TrashIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                   </button>
                 </div>
               </div>

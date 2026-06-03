@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { CelebrationIcon, HeartEnvelopeIcon } from '../components/Icons'
 
 type Guest = {
   id: string
@@ -267,8 +268,8 @@ export default function InvitacionPage() {
                 <label style={labelStyle}>¿Asistirás?</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {[
-                    { val: true,  label: 'Sí, asistiré',   emoji: '🎉' },
-                    { val: false, label: 'No podré asistir', emoji: '💌' },
+                    { val: true,  label: 'Sí, asistiré',   icon: <CelebrationIcon size={28} color='var(--olive)' /> },
+                    { val: false, label: 'No podré asistir', icon: <HeartEnvelopeIcon size={28} color='var(--olive)' /> },
                   ].map(opt => (
                     <button
                       key={String(opt.val)}
@@ -286,7 +287,7 @@ export default function InvitacionPage() {
                         transition: 'all 0.18s',
                       }}
                     >
-                      <div style={{ fontSize: '22px', marginBottom: '6px' }}>{opt.emoji}</div>
+                      <div style={{ fontSize: '22px', marginBottom: '6px' }}>{opt.icon}</div>
                       {opt.label}
                     </button>
                   ))}

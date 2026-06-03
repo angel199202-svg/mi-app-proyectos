@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import { StarIcon, LinkIcon, TrashIcon } from '../../components/Icons'
 
 type Photo = {
   id: string
@@ -270,7 +271,7 @@ export default function FotosAdminPage() {
                     border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px',
                   }}
                 >
-                  ⭐
+                  <StarIcon size={14} color={photo.is_featured ? 'var(--olive)' : 'var(--muted)'} strokeWidth={1.5} />
                 </button>
 
                 <a
@@ -280,7 +281,7 @@ export default function FotosAdminPage() {
                   style={{ padding: '6px 10px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px', textDecoration: 'none', display: 'inline-flex' }}
                   title="Ver original"
                 >
-                  🔗
+                  <LinkIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                 </a>
 
                 <button
@@ -288,7 +289,7 @@ export default function FotosAdminPage() {
                   title="Eliminar"
                   style={{ padding: '6px 10px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px' }}
                 >
-                  🗑
+                  <TrashIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                 </button>
               </div>
             </div>

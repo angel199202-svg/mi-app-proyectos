@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { FloatingPetals } from './components/FloatingPetals'
 import { RevealSection } from './components/RevealSection'
+import { CalendarIcon, ClockIcon, PinIcon, HangerIcon, LeafIcon, PhoneOffIcon } from './components/Icons'
 
 /* ─── SVG Decorations ───────────────────────────────── */
 function BotanicalSprig({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
@@ -451,19 +452,19 @@ export default function WeddingPage() {
             >
               {[
                 {
-                  icon: '🗓',
+                  icon: <CalendarIcon size={28} color="var(--olive)" strokeWidth={1.3} />,
                   label: 'Fecha',
                   value: '17 de Julio, 2026',
                   sub: 'Viernes',
                 },
                 {
-                  icon: '⏰',
+                  icon: <ClockIcon size={28} color="var(--olive)" strokeWidth={1.3} />,
                   label: 'Hora',
                   value: '16:00 hrs',
                   sub: 'Llegada sugerida: 30 min antes',
                 },
                 {
-                  icon: '📍',
+                  icon: <PinIcon size={28} color="var(--olive)" strokeWidth={1.3} />,
                   label: 'Lugar',
                   value: 'Res. Valle Alto',
                   sub: 'Valencia, Venezuela',
@@ -473,9 +474,9 @@ export default function WeddingPage() {
                   <div className="info-card">
                     <div
                       style={{
-                        fontSize: '28px',
                         marginBottom: '12px',
-                        lineHeight: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
                       }}
                     >
                       {item.icon}
@@ -752,9 +753,9 @@ export default function WeddingPage() {
                 }}
               >
                 {[
-                  { icon: '👗', text: 'Vestimenta elegante' },
-                  { icon: '🌿', text: 'Celebración íntima' },
-                  { icon: '📵', text: 'Momento presente' },
+                  { icon: <HangerIcon size={24} color='var(--olive)' strokeWidth={1.4} />, text: 'Vestimenta elegante' },
+                  { icon: <LeafIcon size={24} color='var(--olive)' strokeWidth={1.4} />, text: 'Celebración íntima' },
+                  { icon: <PhoneOffIcon size={24} color='var(--olive)' strokeWidth={1.4} />, text: 'Momento presente' },
                 ].map((item) => (
                   <div
                     key={item.text}
@@ -766,7 +767,7 @@ export default function WeddingPage() {
                       textAlign: 'center',
                     }}
                   >
-                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>{item.icon}</div>
+                    <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>{item.icon}</div>
                     <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--olive)', letterSpacing: '0.04em' }}>
                       {item.text}
                     </p>

@@ -1,3 +1,4 @@
+import { CalendarIcon, ClockIcon, PinIcon, CarIcon, ParkingIcon, HangerIcon, LeafIcon, PhoneOffIcon, WineIcon, GiftIcon, NoChildIcon } from '../components/Icons'
 import Link from 'next/link'
 
 export default function LugarPage() {
@@ -119,23 +120,23 @@ export default function LugarPage() {
         >
           {[
             {
-              icon: '🗓',
+              icon: <CalendarIcon size={26} color='var(--olive)' strokeWidth={1.3} />,
               title: 'Fecha y hora',
               lines: ['Viernes · 17 de Julio, 2026', 'A las 16:00 hrs', 'Llegada sugerida: 15:30 hrs'],
             },
             {
-              icon: '🚗',
+              icon: <CarIcon size={26} color='var(--olive)' strokeWidth={1.3} />,
               title: 'Cómo llegar',
               lines: ['Residencias Valle Alto', 'Valencia, Estado Carabobo', 'Ver en Google Maps →'],
             },
             {
-              icon: '📍',
+              icon: <PinIcon size={26} color='var(--olive)' strokeWidth={1.3} />,
               title: 'Coordenadas',
               lines: ['10.205088, -68.024667', 'Valencia, Venezuela'],
             },
           ].map((card) => (
             <div key={card.title} className="info-card">
-              <div style={{ fontSize: '28px', marginBottom: '12px' }}>{card.icon}</div>
+              <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>{card.icon}</div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 400, color: 'var(--olive)', marginBottom: '12px' }}>
                 {card.title}
               </h3>
@@ -209,32 +210,32 @@ export default function LugarPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
               {
-                icon: '💛',
+                icon: <LeafIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
                 title: 'Es un encuentro, no una fiesta',
                 body: 'No habrá música a alto volumen ni baile prolongado. Es un momento íntimo para compartir, conversar y celebrar juntos de manera tranquila.',
               },
               {
-                icon: '📵',
+                icon: <PhoneOffIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
                 title: 'Momento sin pantallas (durante la ceremonia)',
                 body: 'Durante la ceremonia pedimos que los teléfonos queden guardados. Queremos que todos estén presentes en ese momento tan especial. Habrá tiempo para fotos después.',
               },
               {
-                icon: '🍷',
+                icon: <WineIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
                 title: 'Alcohol responsable',
                 body: 'Habrá vino y algo de alcohol disponible, pero queremos una celebración consciente. Apreciamos que cada persona tome sus propias decisiones al respecto.',
               },
               {
-                icon: '👶',
+                icon: <NoChildIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
                 title: 'Evento para adultos',
                 body: 'Para mantener la atmósfera que buscamos, es un evento solo para adultos. Te pedimos considerar esto al planificar tu asistencia.',
               },
               {
-                icon: '🎁',
+                icon: <GiftIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
                 title: 'Los regalos no son necesarios',
                 body: 'Su presencia es el mejor regalo. Si desean contribuir de alguna manera, en breve compartiremos una lista de deseos para quienes insistan.',
               },
               {
-                icon: '⏰',
+                icon: <ClockIcon size={22} color="var(--olive)" strokeWidth={1.3} />,
                 title: 'Puntualidad',
                 body: 'Te pedimos llegar a tiempo. La ceremonia comenzará a la hora indicada y no queremos interrupciones.',
               },
@@ -251,7 +252,7 @@ export default function LugarPage() {
                   alignItems: 'flex-start',
                 }}
               >
-                <div style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0, marginTop: '2px' }}>{item.icon}</div>
+                <div style={{ flexShrink: 0, marginTop: '2px' }}>{item.icon}</div>
                 <div>
                   <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 500, color: 'var(--cream)', marginBottom: '6px' }}>
                     {item.title}

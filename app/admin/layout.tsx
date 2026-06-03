@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { DashboardIcon, PeopleIcon, PhotosIcon } from '../components/Icons'
 import { supabase } from '@/lib/supabase'
 
 const NAV = [
-  { href: '/admin',           label: 'Resumen',    icon: '◈' },
-  { href: '/admin/invitados', label: 'Invitados',  icon: '◻' },
-  { href: '/admin/fotos',     label: 'Fotos',      icon: '◧' },
+  { href: '/admin',           label: 'Resumen',    icon: <DashboardIcon size={15} color='currentColor' strokeWidth={1.5} /> },
+  { href: '/admin/invitados', label: 'Invitados',  icon: <PeopleIcon size={15} color='currentColor' strokeWidth={1.5} /> },
+  { href: '/admin/fotos',     label: 'Fotos',      icon: <PhotosIcon size={15} color='currentColor' strokeWidth={1.5} /> },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

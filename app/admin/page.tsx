@@ -1,3 +1,4 @@
+import { PeopleIcon, CameraIcon, GlobeIcon } from '../components/Icons'
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -110,9 +111,9 @@ export default function AdminDashboard() {
       {/* Quick links */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
         {[
-          { href: '/admin/invitados', title: 'Gestionar invitados', desc: 'Agregar, editar o eliminar invitados y sus códigos', icon: '👥' },
-          { href: '/admin/fotos',     title: 'Gestionar fotos',     desc: 'Subir fotos al álbum y administrar la galería',  icon: '📷' },
-          { href: '/',                title: 'Ver el sitio',         desc: 'Abre la página de invitación como la ven los invitados', icon: '🌐' },
+          { href: '/admin/invitados', title: 'Gestionar invitados', desc: 'Agregar, editar o eliminar invitados y sus códigos', icon: <PeopleIcon size={24} color='var(--olive)' strokeWidth={1.3} /> },
+          { href: '/admin/fotos',     title: 'Gestionar fotos',     desc: 'Subir fotos al álbum y administrar la galería',  icon: <CameraIcon size={24} color='var(--olive)' strokeWidth={1.3} /> },
+          { href: '/',                title: 'Ver el sitio',         desc: 'Abre la página de invitación como la ven los invitados', icon: <GlobeIcon size={24} color='var(--olive)' strokeWidth={1.3} /> },
         ].map((card) => (
           <Link
             key={card.href}
@@ -136,7 +137,7 @@ export default function AdminDashboard() {
               e.currentTarget.style.boxShadow = 'none'
             }}
           >
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>{card.icon}</div>
+            <div style={{ marginBottom: '10px', display: 'flex' }}>{card.icon}</div>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--olive)', marginBottom: '6px' }}>
               {card.title}
             </h3>
