@@ -1,21 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Great_Vibes, Lato } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const greatVibes = Great_Vibes({
+  variable: "--font-script",
   subsets: ["latin"],
+  weight: "400",
+});
+
+const lato = Lato({
+  variable: "--font-lato",
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
-  title: "PYMS · WMS para Pymes",
-  description: "Gestión de stock, picking, packing y despacho para pymes. Simple, rápido, sin complejidad.",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent" },
+  title: "Angel & Milagros · La Boda Pandaneiros",
+  description: "Estás invitado a nuestra boda. Un día especial para compartir con quienes más amamos.",
+  appleWebApp: { capable: true, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -31,10 +41,10 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="es"
+      className={`${cormorant.variable} ${greatVibes.variable} ${lato.variable}`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

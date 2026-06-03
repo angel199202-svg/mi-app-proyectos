@@ -1,41 +1,348 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --cream: #e5e3e6;
+  --sand:  #c4bfac;
+  --olive: #6a6b4b;
+  --rose:  #d1beb0;
+  --warm:  #faf9f7;
+  --text:  #3a3a28;
+  --muted: #7c7c60;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cream:     var(--cream);
+  --color-sand:      var(--sand);
+  --color-olive:     var(--olive);
+  --color-rose:      var(--rose);
+  --color-warm:      var(--warm);
+  --color-text-dark: var(--text);
+  --color-muted:     var(--muted);
+  --font-display: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-script:  var(--font-script), cursive;
+  --font-body:    var(--font-lato), Arial, sans-serif;
 }
+
+/* ─── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
 }
 
-input, select, textarea {
-  font-size: 16px; /* prevents iOS zoom on focus */
+input, select, textarea { font-size: 16px; }
+
+/* ─── Envelope Intro ─────────────────────────────────────────── */
+.envelope-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+  z-index: 100;
+  transition: opacity 0.7s 1.2s ease-in-out;
 }
 
+.envelope-overlay.is-exiting {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.envelope-wrap {
+  width: 340px;
+  height: 230px;
+  position: relative;
+  perspective: 900px;
+  cursor: pointer;
+  margin-top: -40px;
+}
+
+.env-body {
+  position: absolute;
+  inset: 0;
+  background: var(--warm);
+  border-radius: 3px;
+  box-shadow:
+    0 28px 64px -12px rgba(106, 107, 75, 0.24),
+    0 4px 16px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.env-fold-l {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 0 100%, 50% 57%);
+  background: var(--sand);
+  opacity: 0.62;
+}
+.env-fold-r {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(100% 0, 100% 100%, 50% 57%);
+  background: var(--sand);
+  opacity: 0.5;
+}
+.env-fold-b {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 100%, 100% 100%, 50% 57%);
+  background: var(--rose);
+  opacity: 0.72;
+}
+
+.env-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-left:  170px solid transparent;
+  border-right: 170px solid transparent;
+  border-top:   118px solid var(--sand);
+  filter: brightness(0.93);
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  z-index: 5;
+  transition: transform 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.env-open .env-flap {
+  transform: rotateX(-185deg);
+}
+
+.env-seal {
+  position: absolute;
+  top: 88px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  background: var(--olive);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 700;
+  font-style: italic;
+  z-index: 6;
+  box-shadow:
+    0 3px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.4s 0.1s, transform 0.22s;
+}
+
+.env-seal:hover {
+  transform: translate(-50%, -50%) scale(1.07);
+}
+
+.env-open .env-seal {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.env-card {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 10px;
+  height: 192px;
+  background: var(--warm);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 0 20px;
+  border-top: 2px solid var(--rose);
+  transition: transform 0.9s 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.env-open .env-card {
+  transform: translateY(-172px);
+}
+
+.env-hint {
+  margin-top: 52px;
+  font-size: 11px;
+  color: var(--olive);
+  opacity: 0.55;
+  font-family: var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: pulse-soft 2.2s ease-in-out infinite;
+}
+
+/* ─── Floating Petals ────────────────────────────────────────── */
+.petals-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.petal {
+  position: absolute;
+  top: -50px;
+  animation: petal-fall linear infinite;
+  will-change: transform;
+}
+
+/* ─── Scroll Reveal ──────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.75s ease-out, transform 0.75s ease-out;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Botanical Divider ──────────────────────────────────────── */
+.divider-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--olive);
+  opacity: 0.45;
+}
+.divider-line::before,
+.divider-line::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+}
+
+/* ─── Section Cards ──────────────────────────────────────────── */
+.info-card {
+  background: var(--warm);
+  border: 1px solid var(--sand);
+  border-radius: 4px;
+  padding: 28px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--rose);
+  opacity: 0.7;
+}
+
+/* ─── CTA Button ─────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--olive);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  text-decoration: none;
+}
+.btn-primary:hover {
+  background: #555740;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--olive);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 13px 32px;
+  border-radius: 2px;
+  border: 1.5px solid var(--olive);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+}
+.btn-outline:hover {
+  background: var(--olive);
+  color: var(--cream);
+}
+
+/* ─── Animations ─────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes petal-fall {
+  0%   { opacity: 0; transform: translateY(0) rotate(0deg) translateX(0); }
+  8%   { opacity: 0.65; }
+  88%  { opacity: 0.45; }
+  100% { opacity: 0; transform: translateY(100vh) rotate(400deg) translateX(80px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 0.7; }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-7px); }
+}
+
+@keyframes shimmer-text {
+  0%   { background-position: -400% center; }
+  100% { background-position: 400% center; }
+}
+
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50%       { transform: translateY(6px); opacity: 1; }
+}
+
+/* ─── Legacy (for /app/* routes) ────────────────────────────── */
 @keyframes slideUp {
   0%   { opacity: 0; transform: translateY(24px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-
-.modal-slide-up {
-  animation: slideUp 0.22s ease-out both;
-}
-
-.pb-safe {
-  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
-}
-
-.pt-safe {
-  padding-top: max(3rem, env(safe-area-inset-top));
-}
+.modal-slide-up { animation: slideUp 0.22s ease-out both; }
+.pb-safe { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+.pt-safe { padding-top: max(3rem, env(safe-area-inset-top)); }
