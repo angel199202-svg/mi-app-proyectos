@@ -59,15 +59,24 @@ function RingsIcon() {
 /* ─── Envelope Opening ──────────────────────────────── */
 function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
   const [opened, setOpened] = useState(false)
+  const [hint, setHint] = useState<'seal' | 'card' | null>('seal')
   const [exiting, setExiting] = useState(false)
 
-  const handleOpen = () => {
+  /* Seal click → open flap + card, then wait for user to tap card */
+  const handleSeal = () => {
     if (opened) return
     setOpened(true)
-    setTimeout(() => {
-      setExiting(true)
-      setTimeout(onDone, 750)
-    }, 1600)
+    setHint(null)
+    /* After 7s without tapping card, show tap hint */
+    setTimeout(() => setHint('card'), 7000)
+  }
+
+  /* Card click → transition to main page */
+  const handleCard = () => {
+    if (!opened || exiting) return
+    setHint(null)
+    setExiting(true)
+    setTimeout(onDone, 700)
   }
 
   return (
@@ -80,23 +89,22 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
 
       {/* Envelope */}
       <div className={`envelope-wrap${opened ? ' env-open' : ''}`}>
-        {/* Body with fold decorations */}
         <div className="env-body">
           <div className="env-fold-l" />
           <div className="env-fold-r" />
           <div className="env-fold-b" />
         </div>
-
-        {/* Top flap */}
         <div className="env-flap" />
 
-        {/* Wax seal — click to open */}
-        <button className="env-seal" onClick={handleOpen} aria-label="Abrir carta">
-          P
-        </button>
+        {/* Wax seal */}
+        <button className="env-seal" onClick={handleSeal} aria-label="Abrir carta">P</button>
 
-        {/* Card that slides up */}
-        <div className="env-card">
+        {/* Card — clickable once open */}
+        <div
+          className="env-card"
+          onClick={handleCard}
+          style={{ cursor: opened ? 'pointer' : 'default' }}
+        >
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px' }}>
             Boda Pandaneiros
           </p>
@@ -116,9 +124,17 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
         </div>
       </div>
 
-      {/* Hint */}
-      {!opened && (
+      {/* Hint below envelope */}
+      {hint === 'seal' && (
         <p className="env-hint">Toca el sello para abrir tu invitación</p>
+      )}
+      {hint === 'card' && (
+        <p
+          className="env-hint"
+          style={{ animation: 'fade-in 0.5s ease-out both, pulse-soft 2s 0.5s ease-in-out infinite' }}
+        >
+          Toca la carta para continuar
+        </p>
       )}
     </div>
   )
