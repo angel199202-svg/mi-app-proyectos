@@ -213,7 +213,7 @@ export default function InvitacionPage() {
             >
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--rose)', opacity: 0.7 }} />
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
-                La Boda Pandaneiros · Invitación personal
+                Boda Pandaneiros · Invitación personal
               </p>
               <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '17px', color: 'var(--muted)', marginBottom: '8px' }}>
                 Con mucho amor, invitamos a

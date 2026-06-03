@@ -66,7 +66,7 @@ export default function AdminDashboard() {
           Resumen
         </h1>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginTop: '4px' }}>
-          La Boda Pandaneiros · Viernes 17 de Julio, 2026
+          Boda Pandaneiros · Viernes 17 de Julio, 2026
         </p>
       </div>
 

@@ -6,6 +6,7 @@ import { FloatingPetals } from './components/FloatingPetals'
 import { RevealSection } from './components/RevealSection'
 import { CalendarIcon, ClockIcon, PinIcon, HangerIcon, LeafIcon, PhoneOffIcon } from './components/Icons'
 import { supabase } from '@/lib/supabase'
+import { Countdown } from './components/Countdown'
 
 /* ─── SVG Decorations ───────────────────────────────── */
 function BotanicalSprig({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
@@ -96,41 +97,21 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
 
         {/* Card that slides up */}
         <div className="env-card">
-          <p
-            style={{
-              fontFamily: 'var(--font-script)',
-              fontSize: '13px',
-              color: 'var(--muted)',
-              letterSpacing: '0.04em',
-              marginBottom: '6px',
-            }}
-          >
-            La Boda Pandaneiros
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px' }}>
+            Boda Pandaneiros
           </p>
-          <h2
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '28px',
-              fontWeight: 300,
-              fontStyle: 'italic',
-              color: 'var(--olive)',
-              lineHeight: 1.2,
-              margin: '4px 0',
-            }}
-          >
+          <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5, marginBottom: '6px' }}>
+            Es con inmenso placer que
+          </p>
+          <h2 style={{ fontFamily: 'var(--font-script)', fontSize: '30px', color: 'var(--olive)', lineHeight: 1.1, margin: '0 0 6px' }}>
             Angel &amp; Milagros
           </h2>
-          <div style={{ width: '40px', height: '1px', background: 'var(--rose)', margin: '10px auto', opacity: 0.8 }} />
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '10px',
-              color: 'var(--muted)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Te invita a su encuentro
+          <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '12px', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '8px' }}>
+            te invitan a celebrar su matrimonio
+          </p>
+          <div style={{ width: '32px', height: '1px', background: 'var(--rose)', margin: '0 auto 8px', opacity: 0.7 }} />
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.7 }}>
+            17 · 07 · 2026 &nbsp;·&nbsp; Valencia
           </p>
         </div>
       </div>
@@ -237,7 +218,7 @@ export default function WeddingPage() {
                 animation: 'fade-up 0.9s 0.1s ease-out both',
               }}
             >
-              La Boda Pandaneiros
+              Boda Pandaneiros
             </p>
 
             <h1
@@ -529,100 +510,16 @@ export default function WeddingPage() {
                 </RevealSection>
               ))}
             </div>
-          </div>
-        </section>
 
-        {/* ── CONFIRMAR ASISTENCIA ──────────────────── */}
-        <section
-          style={{
-            padding: '80px 24px',
-            background: 'var(--olive)',
-            position: 'relative',
-            overflow: 'hidden',
-            textAlign: 'center',
-          }}
-        >
-          {/* Decorative background circles */}
-          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-            <div style={{
-              position: 'absolute', top: '-80px', right: '-80px',
-              width: '320px', height: '320px', borderRadius: '50%',
-              background: 'rgba(209,190,176,0.08)',
-            }} />
-            <div style={{
-              position: 'absolute', bottom: '-60px', left: '-60px',
-              width: '240px', height: '240px', borderRadius: '50%',
-              background: 'rgba(196,191,172,0.08)',
-            }} />
+            <RevealSection delay={200}>
+              <div style={{ marginTop: '40px' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--muted)', textAlign: 'center', marginBottom: '20px' }}>
+                  Falta
+                </p>
+                <Countdown />
+              </div>
+            </RevealSection>
           </div>
-
-          <RevealSection>
-            <div style={{ position: 'relative', zIndex: 1, maxWidth: 520, margin: '0 auto' }}>
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--rose)',
-                  opacity: 0.85,
-                  marginBottom: '16px',
-                }}
-              >
-                Tu invitación personal
-              </p>
-              <h2
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(28px, 5vw, 42px)',
-                  fontWeight: 300,
-                  fontStyle: 'italic',
-                  color: 'var(--cream)',
-                  marginBottom: '20px',
-                  lineHeight: 1.3,
-                }}
-              >
-                ¿Tienes tu código de invitación?
-              </h2>
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '15px',
-                  color: 'var(--sand)',
-                  opacity: 0.85,
-                  lineHeight: 1.65,
-                  marginBottom: '36px',
-                }}
-              >
-                Cada invitado recibe un código único. Ingrésalo para ver tu
-                invitación personalizada y confirmar tu asistencia.
-              </p>
-              <Link
-                href="/invitacion"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'var(--cream)',
-                  color: 'var(--olive)',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  padding: '14px 36px',
-                  borderRadius: '2px',
-                  textDecoration: 'none',
-                  transition: 'background 0.2s, transform 0.15s',
-                }}
-              >
-                Ver mi invitación
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </Link>
-            </div>
-          </RevealSection>
         </section>
 
         {/* ── EL LUGAR ─────────────────────────────── */}
@@ -866,6 +763,99 @@ export default function WeddingPage() {
               </Link>
             </RevealSection>
           </div>
+        </section>
+
+        {/* ── CONFIRMAR ASISTENCIA ──────────────────── */}
+        <section
+          style={{
+            padding: '80px 24px',
+            background: 'var(--olive)',
+            position: 'relative',
+            overflow: 'hidden',
+            textAlign: 'center',
+          }}
+        >
+          {/* Decorative background circles */}
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+            <div style={{
+              position: 'absolute', top: '-80px', right: '-80px',
+              width: '320px', height: '320px', borderRadius: '50%',
+              background: 'rgba(209,190,176,0.08)',
+            }} />
+            <div style={{
+              position: 'absolute', bottom: '-60px', left: '-60px',
+              width: '240px', height: '240px', borderRadius: '50%',
+              background: 'rgba(196,191,172,0.08)',
+            }} />
+          </div>
+
+          <RevealSection>
+            <div style={{ position: 'relative', zIndex: 1, maxWidth: 520, margin: '0 auto' }}>
+              <p
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '10px',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: 'var(--rose)',
+                  opacity: 0.85,
+                  marginBottom: '16px',
+                }}
+              >
+                Tu invitación personal
+              </p>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 'clamp(28px, 5vw, 42px)',
+                  fontWeight: 300,
+                  fontStyle: 'italic',
+                  color: 'var(--cream)',
+                  marginBottom: '20px',
+                  lineHeight: 1.3,
+                }}
+              >
+                ¿Tienes tu código de invitación?
+              </h2>
+              <p
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '15px',
+                  color: 'var(--sand)',
+                  opacity: 0.85,
+                  lineHeight: 1.65,
+                  marginBottom: '36px',
+                }}
+              >
+                Cada invitado recibe un código único. Ingrésalo para ver tu
+                invitación personalizada y confirmar tu asistencia.
+              </p>
+              <Link
+                href="/invitacion"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'var(--cream)',
+                  color: 'var(--olive)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  padding: '14px 36px',
+                  borderRadius: '2px',
+                  textDecoration: 'none',
+                  transition: 'background 0.2s, transform 0.15s',
+                }}
+              >
+                Ver mi invitación
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </Link>
+            </div>
+          </RevealSection>
         </section>
 
         {/* ── FOOTER ───────────────────────────────── */}

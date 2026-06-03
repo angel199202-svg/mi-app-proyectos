@@ -24,7 +24,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
-  title: "Angel & Milagros · La Boda Pandaneiros",
+  title: "Angel & Milagros · Boda Pandaneiros",
   description: "Estás invitado a nuestra boda. Un día especial para compartir con quienes más amamos.",
   appleWebApp: { capable: true, statusBarStyle: "default" },
 };
