@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Great_Vibes, Lato } from "next/font/google";
 import "./globals.css";
+import { MusicPlayer } from "./components/MusicPlayer";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -44,7 +45,10 @@ export default function RootLayout({
       lang="es"
       className={`${cormorant.variable} ${greatVibes.variable} ${lato.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <MusicPlayer />
+      </body>
     </html>
   );
 }
