@@ -163,7 +163,7 @@ export default function WeddingPage() {
         style={{
           background: 'var(--cream)',
           minHeight: '100vh',
-          animation: envelopeDone ? 'fade-in 0.6s ease-out both' : undefined,
+          animation: envelopeDone ? 'page-reveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) both' : undefined,
           opacity: envelopeDone ? undefined : 0,
         }}
       >
@@ -231,7 +231,7 @@ export default function WeddingPage() {
                 color: 'var(--olive)',
                 opacity: 0.65,
                 marginBottom: '28px',
-                animation: 'fade-up 0.9s 0.1s ease-out both',
+                animation: 'fade-up 1.1s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
               Boda Pandaneiros
@@ -244,7 +244,7 @@ export default function WeddingPage() {
                 color: 'var(--olive)',
                 lineHeight: 1.05,
                 margin: '0 0 8px',
-                animation: 'fade-up 0.9s 0.25s ease-out both',
+                animation: 'fade-up 1.2s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
               Angel
@@ -258,7 +258,7 @@ export default function WeddingPage() {
                 opacity: 0.9,
                 margin: '0 0 4px',
                 letterSpacing: '0.05em',
-                animation: 'fade-up 0.9s 0.35s ease-out both',
+                animation: 'fade-up 1.2s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
               &amp;
@@ -270,7 +270,7 @@ export default function WeddingPage() {
                 color: 'var(--olive)',
                 lineHeight: 1.05,
                 margin: '0 0 40px',
-                animation: 'fade-up 0.9s 0.45s ease-out both',
+                animation: 'fade-up 1.2s 0.65s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
               Milagros
@@ -287,7 +287,7 @@ export default function WeddingPage() {
                 color: 'var(--text)',
                 opacity: 0.8,
                 marginBottom: '8px',
-                animation: 'fade-up 0.9s 0.6s ease-out both',
+                animation: 'fade-up 1.2s 0.85s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
               Viernes · 17 de Julio, 2026
@@ -300,7 +300,7 @@ export default function WeddingPage() {
                 letterSpacing: '0.14em',
                 textTransform: 'uppercase',
                 marginBottom: '48px',
-                animation: 'fade-up 0.9s 0.7s ease-out both',
+                animation: 'fade-up 1.1s 1.05s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
               16:00 hrs · Valencia, Venezuela
@@ -312,7 +312,7 @@ export default function WeddingPage() {
                 gap: '12px',
                 justifyContent: 'center',
                 flexWrap: 'wrap',
-                animation: 'fade-up 0.9s 0.85s ease-out both',
+                animation: 'fade-up 1.1s 1.25s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
               <Link href="/invitacion" className="btn-primary">
@@ -337,7 +337,7 @@ export default function WeddingPage() {
               alignItems: 'center',
               gap: '6px',
               opacity: 0.4,
-              animation: 'fade-in 1s 1.5s both',
+              animation: 'fade-in 1.4s 1.5s cubic-bezier(0.16, 1, 0.3, 1) both',
             }}
           >
             <span
