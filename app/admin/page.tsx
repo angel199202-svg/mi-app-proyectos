@@ -1,8 +1,6 @@
 'use client'
 
 import { PeopleIcon, CameraIcon, GlobeIcon } from '../components/Icons'
-'use client'
-
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
