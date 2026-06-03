@@ -280,8 +280,7 @@ export default function WeddingPage() {
                 animation: 'fade-up 0.9s 0.6s ease-out both',
               }}
             >
-              {/* TODO: reemplaza con la fecha real */}
-              Sábado · [Fecha del evento]
+              Viernes · 17 de Julio, 2026
             </p>
             <p
               style={{
@@ -294,8 +293,7 @@ export default function WeddingPage() {
                 animation: 'fade-up 0.9s 0.7s ease-out both',
               }}
             >
-              {/* TODO: reemplaza con la hora y lugar real */}
-              [Hora] · [Ciudad, País]
+              16:00 hrs · Valencia, Venezuela
             </p>
 
             <div
@@ -455,20 +453,20 @@ export default function WeddingPage() {
                 {
                   icon: '🗓',
                   label: 'Fecha',
-                  value: '[Fecha del evento]', /* TODO */
-                  sub: 'Sábado',
+                  value: '17 de Julio, 2026',
+                  sub: 'Viernes',
                 },
                 {
                   icon: '⏰',
                   label: 'Hora',
-                  value: '[Hora de inicio]', /* TODO */
+                  value: '16:00 hrs',
                   sub: 'Llegada sugerida: 30 min antes',
                 },
                 {
                   icon: '📍',
                   label: 'Lugar',
-                  value: '[Nombre del lugar]', /* TODO */
-                  sub: '[Ciudad, País]',
+                  value: 'Valencia',
+                  sub: 'Venezuela',
                 },
               ].map((item, i) => (
                 <RevealSection key={item.label} delay={i * 120}>
@@ -897,8 +895,7 @@ export default function WeddingPage() {
               marginBottom: '8px',
             }}
           >
-            {/* TODO: reemplaza con la fecha real */}
-            [Fecha del evento]
+            Viernes · 17 de Julio, 2026
           </p>
           <p
             style={{

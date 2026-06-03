@@ -52,16 +52,13 @@ export default function LugarPage() {
             marginBottom: '20px',
           }}
         >
-          {/* TODO: reemplaza con el nombre real */}
-          [Nombre del lugar]
+          Valencia, Venezuela
         </h1>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: '16px', color: 'var(--muted)', marginBottom: '6px' }}>
-          {/* TODO */}
-          [Dirección completa]
+          Valencia, Estado Carabobo
         </p>
         <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '18px', color: 'var(--text)', opacity: 0.7 }}>
-          {/* TODO */}
-          Sábado · [Fecha] · [Hora]
+          Viernes · 17 de Julio, 2026 · 16:00 hrs
         </p>
       </section>
 
@@ -115,7 +112,7 @@ export default function LugarPage() {
             {
               icon: '🗓',
               title: 'Fecha y hora',
-              lines: ['Sábado · [Fecha del evento] {/* TODO */}', 'A las [Hora de inicio]', 'Llegada: 30 min antes'],
+              lines: ['Viernes · 17 de Julio, 2026', 'A las 16:00 hrs', 'Llegada sugerida: 15:30 hrs'],
             },
             {
               icon: '🚗',
