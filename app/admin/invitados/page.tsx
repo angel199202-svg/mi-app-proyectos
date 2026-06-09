@@ -9,7 +9,7 @@ type Guest = {
   code: string
   name: string
   email: string | null
-  allow_plus_one: boolean
+  max_companions: number
   rsvp_attending: boolean | null
   rsvp_plus_one: boolean | null
   rsvp_plus_one_name: string | null
@@ -23,21 +23,26 @@ type FormData = {
   code: string
   name: string
   email: string
-  allow_plus_one: boolean
+  max_companions: number
 }
 
 type BulkRow = {
   name: string
   email: string
-  allow_plus_one: boolean
+  max_companions: number
   code: string
 }
 
-const EMPTY_FORM: FormData = { code: '', name: '', email: '', allow_plus_one: false }
+const EMPTY_FORM: FormData = { code: '', name: '', email: '', max_companions: 0 }
 
 function rsvpBadge(guest: Guest) {
   if (guest.rsvp_attending === null) return { label: 'Sin respuesta', bg: 'var(--sand)', color: 'var(--muted)' }
-  if (guest.rsvp_attending === true)  return { label: guest.rsvp_plus_one ? 'Asiste +1' : 'Asiste', bg: '#d4e8d0', color: '#3a6636' }
+  if (guest.rsvp_attending === true) {
+    const count = guest.rsvp_plus_one && guest.rsvp_plus_one_name
+      ? guest.rsvp_plus_one_name.split(',').length
+      : guest.rsvp_plus_one ? 1 : 0
+    return { label: count > 0 ? `Asiste +${count}` : 'Asiste', bg: '#d4e8d0', color: '#3a6636' }
+  }
   return { label: 'No asiste', bg: '#f0dede', color: '#8B2020' }
 }
 
@@ -57,12 +62,15 @@ function parseBulkText(text: string): BulkRow[] {
       const [rawName = '', rawEmail = '', rawPlus = ''] = line.split(',').map((p) => p.trim())
       const name = rawName
       const email = rawEmail
-      const allow_plus_one = ['true', '1', 'si', 'sí', 'yes', 'x'].includes(rawPlus.toLowerCase())
+      const plusLower = rawPlus.toLowerCase()
+      const max_companions = /^\d+$/.test(rawPlus)
+        ? parseInt(rawPlus)
+        : ['true', '1', 'si', 'sí', 'yes', 'x'].includes(plusLower) ? 1 : 0
       let code = generateCode(name)
       let tries = 0
       while (usedCodes.has(code) && tries < 20) { code = generateCode(name); tries++ }
       usedCodes.add(code)
-      return { name, email, allow_plus_one, code }
+      return { name, email, max_companions, code }
     })
     .filter((r) => r.name)
 }
@@ -71,20 +79,17 @@ export default function InvitadosPage() {
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
 
-  // single guest modal
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Guest | null>(null)
   const [form, setForm] = useState<FormData>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // table ui
   const [copied, setCopied] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filterRsvp, setFilterRsvp] = useState<'all' | 'pending' | 'yes' | 'no'>('all')
 
-  // bulk import
   const [showBulk, setShowBulk] = useState(false)
   const [bulkText, setBulkText] = useState('')
   const [bulkRows, setBulkRows] = useState<BulkRow[]>([])
@@ -112,7 +117,7 @@ export default function InvitadosPage() {
 
   function openEdit(g: Guest) {
     setEditing(g)
-    setForm({ code: g.code, name: g.name, email: g.email ?? '', allow_plus_one: g.allow_plus_one })
+    setForm({ code: g.code, name: g.name, email: g.email ?? '', max_companions: g.max_companions })
     setError('')
     setShowModal(true)
   }
@@ -127,7 +132,8 @@ export default function InvitadosPage() {
       code:           form.code.trim().toUpperCase(),
       name:           form.name.trim(),
       email:          form.email.trim() || null,
-      allow_plus_one: form.allow_plus_one,
+      max_companions: form.max_companions,
+      allow_plus_one: form.max_companions > 0,
     }
 
     let err
@@ -161,7 +167,6 @@ export default function InvitadosPage() {
     setTimeout(() => setCopied(null), 2000)
   }
 
-  // ─── Bulk import handlers ───────────────────────
   function openBulk() {
     setBulkText('')
     setBulkRows([])
@@ -184,11 +189,11 @@ export default function InvitadosPage() {
     const payload = bulkRows.map((r) => ({
       name:           r.name,
       email:          r.email || null,
-      allow_plus_one: r.allow_plus_one,
+      max_companions: r.max_companions,
+      allow_plus_one: r.max_companions > 0,
       code:           r.code,
     }))
 
-    // try batch first
     const { data, error: batchErr } = await supabase
       .from('wedding_guests')
       .insert(payload)
@@ -198,7 +203,6 @@ export default function InvitadosPage() {
     let failed = 0
 
     if (batchErr) {
-      // batch failed (likely duplicate code) — insert row by row
       for (const row of payload) {
         const { error: rowErr } = await supabase.from('wedding_guests').insert(row)
         if (rowErr) failed++
@@ -214,7 +218,6 @@ export default function InvitadosPage() {
     load()
   }
 
-  // ─── Filters ────────────────────────────────────
   const filtered = guests.filter((g) => {
     const matchSearch = !search || g.name.toLowerCase().includes(search.toLowerCase()) || g.code.toLowerCase().includes(search.toLowerCase())
     const matchRsvp =
@@ -230,6 +233,13 @@ export default function InvitadosPage() {
     fontFamily: 'var(--font-body)', fontSize: '14px',
     background: 'var(--cream)', border: '1.5px solid var(--sand)',
     borderRadius: '3px', color: 'var(--text)', outline: 'none',
+  }
+
+  const stepperBtnStyle: React.CSSProperties = {
+    width: '32px', height: '32px', border: '1.5px solid var(--sand)',
+    background: 'var(--cream)', borderRadius: '3px', cursor: 'pointer',
+    fontFamily: 'var(--font-body)', fontSize: '18px', color: 'var(--olive)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   }
 
   return (
@@ -265,20 +275,14 @@ export default function InvitadosPage() {
           style={{ ...inputStyle, width: 'auto', flex: '1 1 200px', minWidth: '180px' }}
         />
         {(['all', 'pending', 'yes', 'no'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilterRsvp(f)}
+          <button key={f} onClick={() => setFilterRsvp(f)}
             style={{
-              padding: '10px 16px',
-              fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 700,
-              letterSpacing: '0.08em', textTransform: 'uppercase',
-              borderRadius: '3px', border: '1.5px solid',
+              padding: '10px 16px', fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 700,
+              letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: '3px', border: '1.5px solid',
               borderColor: filterRsvp === f ? 'var(--olive)' : 'var(--sand)',
               background: filterRsvp === f ? 'var(--olive)' : 'transparent',
-              color: filterRsvp === f ? 'var(--cream)' : 'var(--muted)',
-              cursor: 'pointer',
-            }}
-          >
+              color: filterRsvp === f ? 'var(--cream)' : 'var(--muted)', cursor: 'pointer',
+            }}>
             {{ all: 'Todos', pending: 'Sin respuesta', yes: 'Asisten', no: 'No asisten' }[f]}
           </button>
         ))}
@@ -295,37 +299,21 @@ export default function InvitadosPage() {
         </div>
       ) : (
         <div style={{ background: 'var(--warm)', border: '1px solid var(--sand)', borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto auto',
-            padding: '10px 16px', borderBottom: '1px solid var(--sand)',
-            background: 'var(--cream)',
-          }}>
-            {['Nombre', 'Código', '+1', 'RSVP', 'Mensaje', 'Acciones'].map((h) => (
-              <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                {h}
-              </span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto auto', padding: '10px 16px', borderBottom: '1px solid var(--sand)', background: 'var(--cream)' }}>
+            {['Nombre', 'Código', 'Acomp.', 'RSVP', 'Msg', 'Acciones'].map((h) => (
+              <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>{h}</span>
             ))}
           </div>
 
           {filtered.map((g, i) => {
             const badge = rsvpBadge(g)
             return (
-              <div
-                key={g.id}
-                style={{
-                  display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto auto',
-                  padding: '14px 16px', alignItems: 'center', gap: '8px',
-                  borderBottom: i < filtered.length - 1 ? '1px solid var(--sand)' : 'none',
-                  background: 'var(--warm)',
-                }}
-              >
+              <div key={g.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto auto', padding: '14px 16px', alignItems: 'center', gap: '8px', borderBottom: i < filtered.length - 1 ? '1px solid var(--sand)' : 'none', background: 'var(--warm)' }}>
                 <div>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text)', fontWeight: 400 }}>{g.name}</p>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text)' }}>{g.name}</p>
                   {g.email && <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--muted)' }}>{g.email}</p>}
                   {g.rsvp_plus_one_name && (
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--muted)', fontStyle: 'italic' }}>
-                      + {g.rsvp_plus_one_name}
-                    </p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--muted)', fontStyle: 'italic' }}>+ {g.rsvp_plus_one_name}</p>
                   )}
                 </div>
 
@@ -333,44 +321,26 @@ export default function InvitadosPage() {
                   {g.code}
                 </code>
 
-                <span style={{ fontSize: '16px', textAlign: 'center' }}>
-                  {g.allow_plus_one ? '✓' : '–'}
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', textAlign: 'center', color: g.max_companions > 0 ? 'var(--olive)' : 'var(--muted)', fontWeight: g.max_companions > 0 ? 700 : 400 }}>
+                  {g.max_companions > 0 ? `+${g.max_companions}` : '–'}
                 </span>
 
-                <span style={{
-                  fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 700,
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                  background: badge.bg, color: badge.color,
-                  padding: '4px 8px', borderRadius: '3px', whiteSpace: 'nowrap',
-                }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: badge.bg, color: badge.color, padding: '4px 8px', borderRadius: '3px', whiteSpace: 'nowrap' }}>
                   {badge.label}
                 </span>
 
-                <span title={g.rsvp_message ?? ''} style={{ fontSize: '16px', textAlign: 'center', cursor: g.rsvp_message ? 'help' : 'default' }}>
+                <span title={g.rsvp_message ?? ''} style={{ textAlign: 'center', cursor: g.rsvp_message ? 'help' : 'default' }}>
                   {g.rsvp_message ? <ChatIcon size={14} color='var(--olive)' strokeWidth={1.5} /> : <span style={{ color: 'var(--muted)', fontSize: '14px' }}>–</span>}
                 </span>
 
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <button
-                    onClick={() => copyLink(g.code)}
-                    title="Copiar link de invitación"
-                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer' }}
-                  >
+                  <button onClick={() => copyLink(g.code)} title="Copiar link" style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer' }}>
                     {copied === g.code ? <CheckIcon size={14} color='var(--olive)' strokeWidth={2.5} /> : <LinkIcon size={14} color='var(--olive)' strokeWidth={1.5} />}
                   </button>
-                  <button
-                    onClick={() => openEdit(g)}
-                    title="Editar"
-                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer' }}
-                  >
+                  <button onClick={() => openEdit(g)} title="Editar" style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer' }}>
                     <EditIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                   </button>
-                  <button
-                    onClick={() => handleDelete(g.id)}
-                    title="Eliminar"
-                    disabled={deleting === g.id}
-                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', opacity: deleting === g.id ? 0.4 : 1 }}
-                  >
+                  <button onClick={() => handleDelete(g.id)} title="Eliminar" disabled={deleting === g.id} style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', opacity: deleting === g.id ? 0.4 : 1 }}>
                     <TrashIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                   </button>
                 </div>
@@ -400,21 +370,9 @@ export default function InvitadosPage() {
 
       {/* ─── Single guest modal ─────────────────────── */}
       {showModal && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false) }}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(58,58,40,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '24px', zIndex: 50,
-            animation: 'fade-in 0.15s ease-out both',
-          }}
-        >
-          <div style={{
-            background: 'var(--warm)', borderRadius: '4px', padding: '32px',
-            width: '100%', maxWidth: 440,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            animation: 'fade-up 0.2s ease-out both',
-          }}>
+        <div onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(58,58,40,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 50, animation: 'fade-in 0.15s ease-out both' }}>
+          <div style={{ background: 'var(--warm)', borderRadius: '4px', padding: '32px', width: '100%', maxWidth: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'fade-up 0.2s ease-out both' }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '24px' }}>
               {editing ? 'Editar invitado' : 'Nuevo invitado'}
             </h2>
@@ -424,17 +382,12 @@ export default function InvitadosPage() {
                 <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: '6px' }}>
                   Nombre completo *
                 </label>
-                <input
-                  type="text"
-                  value={form.name}
+                <input type="text" value={form.name}
                   onChange={(e) => {
                     const name = e.target.value
                     setForm((f) => ({ ...f, name, code: editing ? f.code : generateCode(name) }))
                   }}
-                  required
-                  style={inputStyle}
-                  placeholder="María González"
-                />
+                  required style={inputStyle} placeholder="María González" />
               </div>
 
               <div>
@@ -442,55 +395,55 @@ export default function InvitadosPage() {
                   <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
                     Código de invitación *
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, code: generateCode(f.name) }))}
-                    style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.06em' }}
-                  >
+                  <button type="button" onClick={() => setForm((f) => ({ ...f, code: generateCode(f.name) }))}
+                    style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.06em' }}>
                     ↺ Regenerar
                   </button>
                 </div>
-                <input
-                  type="text"
-                  value={form.code}
+                <input type="text" value={form.code}
                   onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
-                  required
-                  style={{ ...inputStyle, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'monospace', fontSize: '15px' }}
-                  placeholder="MARI-123"
-                />
+                  required style={{ ...inputStyle, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'monospace', fontSize: '15px' }}
+                  placeholder="MARI-123" />
               </div>
 
               <div>
                 <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: '6px' }}>
                   Email (opcional)
                 </label>
-                <input
-                  type="email"
-                  value={form.email}
+                <input type="email" value={form.email}
                   onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  style={inputStyle}
-                  placeholder="maria@ejemplo.com"
-                />
+                  style={inputStyle} placeholder="maria@ejemplo.com" />
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px 14px', background: 'var(--cream)', border: '1.5px solid var(--sand)', borderRadius: '3px' }}>
-                <input
-                  type="checkbox"
-                  checked={form.allow_plus_one}
-                  onChange={(e) => setForm((f) => ({ ...f, allow_plus_one: e.target.checked }))}
-                  style={{ width: '16px', height: '16px', accentColor: 'var(--olive)' }}
-                />
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)' }}>
-                  Puede traer acompañante (+1)
-                </span>
-              </label>
+              {/* Companion stepper */}
+              <div>
+                <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: '10px' }}>
+                  Acompañantes permitidos
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <button type="button" style={stepperBtnStyle}
+                    onClick={() => setForm((f) => ({ ...f, max_companions: Math.max(0, f.max_companions - 1) }))}>
+                    −
+                  </button>
+                  <div style={{ textAlign: 'center', minWidth: '80px' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 300, color: 'var(--olive)' }}>
+                      {form.max_companions}
+                    </span>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--muted)', letterSpacing: '0.08em', marginTop: '2px' }}>
+                      {form.max_companions === 0 ? 'sin acompañante' : form.max_companions === 1 ? 'acompañante' : 'acompañantes'}
+                    </p>
+                  </div>
+                  <button type="button" style={stepperBtnStyle}
+                    onClick={() => setForm((f) => ({ ...f, max_companions: Math.min(10, f.max_companions + 1) }))}>
+                    +
+                  </button>
+                </div>
+              </div>
 
               {error && <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#8B2020' }}>{error}</p>}
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn-outline" style={{ flex: 1 }}>
-                  Cancelar
-                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
                 <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={saving}>
                   {saving ? 'Guardando...' : editing ? 'Guardar cambios' : 'Agregar invitado'}
                 </button>
@@ -502,180 +455,87 @@ export default function InvitadosPage() {
 
       {/* ─── Bulk import modal ──────────────────────── */}
       {showBulk && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget && !bulkImporting) setShowBulk(false) }}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(58,58,40,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '24px', zIndex: 50,
-            animation: 'fade-in 0.15s ease-out both',
-          }}
-        >
-          <div style={{
-            background: 'var(--warm)', borderRadius: '4px', padding: '32px',
-            width: '100%', maxWidth: bulkStep === 'preview' ? 680 : 520,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            animation: 'fade-up 0.2s ease-out both',
-            maxHeight: '90vh', overflowY: 'auto',
-          }}>
+        <div onClick={(e) => { if (e.target === e.currentTarget && !bulkImporting) setShowBulk(false) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(58,58,40,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 50, animation: 'fade-in 0.15s ease-out both' }}>
+          <div style={{ background: 'var(--warm)', borderRadius: '4px', padding: '32px', width: '100%', maxWidth: bulkStep === 'preview' ? 680 : 520, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'fade-up 0.2s ease-out both', maxHeight: '90vh', overflowY: 'auto' }}>
 
-            {/* Step: input */}
             {bulkStep === 'input' && (
               <>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '6px' }}>
                   Carga masiva de invitados
                 </h2>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginBottom: '24px', lineHeight: 1.55 }}>
-                  Pega la lista de invitados, uno por línea. Formato:
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginBottom: '20px', lineHeight: 1.55 }}>
+                  Un invitado por línea. Formato:
                 </p>
-
-                <div style={{ background: 'var(--cream)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '12px 16px', marginBottom: '20px', fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', lineHeight: 1.8 }}>
+                <div style={{ background: 'var(--cream)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '12px 16px', marginBottom: '20px', fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', lineHeight: 1.9 }}>
                   <div>Nombre Apellido</div>
                   <div>Nombre Apellido, email@ejemplo.com</div>
-                  <div>Nombre Apellido, , true&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← con +1</span></div>
-                  <div>Nombre Apellido, email@ejemplo.com, true</div>
+                  <div>Nombre Apellido, , 1&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 1 acompañante</span></div>
+                  <div>Nombre Apellido, email@ejemplo.com, 3&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 3 acompañantes</span></div>
                 </div>
-
-                <textarea
-                  value={bulkText}
-                  onChange={(e) => setBulkText(e.target.value)}
-                  placeholder={'María González\nCarlos Rodríguez, carlos@email.com\nAna Martínez, ana@email.com, true'}
+                <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)}
+                  placeholder={'María González\nCarlos Rodríguez, carlos@email.com\nAna Martínez, ana@email.com, 2'}
                   rows={10}
-                  style={{
-                    ...inputStyle,
-                    resize: 'vertical',
-                    fontFamily: 'monospace',
-                    fontSize: '13px',
-                    lineHeight: 1.7,
-                    marginBottom: '20px',
-                  }}
-                  autoFocus
-                />
-
+                  style={{ ...inputStyle, resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: 1.7, marginBottom: '20px' }}
+                  autoFocus />
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowBulk(false)}
-                    className="btn-outline"
-                    style={{ flex: 1 }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleBulkPreview}
-                    className="btn-primary"
-                    style={{ flex: 2 }}
-                    disabled={!parseBulkText(bulkText).length}
-                  >
+                  <button type="button" onClick={() => setShowBulk(false)} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
+                  <button type="button" onClick={handleBulkPreview} className="btn-primary" style={{ flex: 2 }}
+                    disabled={!parseBulkText(bulkText).length}>
                     Vista previa ({parseBulkText(bulkText).length} invitados)
                   </button>
                 </div>
               </>
             )}
 
-            {/* Step: preview */}
             {bulkStep === 'preview' && (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                   <div>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '4px' }}>
-                      Vista previa
-                    </h2>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>
-                      {bulkRows.length} invitados listos para importar
-                    </p>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '4px' }}>Vista previa</h2>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>{bulkRows.length} invitados</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setBulkStep('input')}
-                    style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.06em', paddingTop: '4px' }}
-                  >
+                  <button type="button" onClick={() => setBulkStep('input')}
+                    style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer', paddingTop: '4px' }}>
                     ← Editar
                   </button>
                 </div>
-
-                {/* Preview table */}
                 <div style={{ border: '1px solid var(--sand)', borderRadius: '4px', overflow: 'hidden', marginBottom: '20px' }}>
-                  {/* Header */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1.2fr 1.5fr 60px',
-                    padding: '8px 14px',
-                    background: 'var(--cream)',
-                    borderBottom: '1px solid var(--sand)',
-                  }}>
-                    {['Nombre', 'Código', 'Email', '+1'].map((h) => (
-                      <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                        {h}
-                      </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 70px', padding: '8px 14px', background: 'var(--cream)', borderBottom: '1px solid var(--sand)' }}>
+                    {['Nombre', 'Código', 'Email', 'Acomp.'].map((h) => (
+                      <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>{h}</span>
                     ))}
                   </div>
-
-                  {/* Rows */}
                   <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
                     {bulkRows.map((r, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '2fr 1.2fr 1.5fr 60px',
-                          padding: '10px 14px',
-                          alignItems: 'center',
-                          borderBottom: i < bulkRows.length - 1 ? '1px solid var(--sand)' : 'none',
-                          background: 'var(--warm)',
-                        }}
-                      >
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)' }}>
-                          {r.name}
-                        </span>
-                        <code style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', background: 'var(--cream)', padding: '2px 6px', borderRadius: '3px', border: '1px solid var(--sand)' }}>
-                          {r.code}
-                        </code>
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {r.email || '–'}
-                        </span>
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: r.allow_plus_one ? 'var(--olive)' : 'var(--muted)', textAlign: 'center' }}>
-                          {r.allow_plus_one ? '✓' : '–'}
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 70px', padding: '10px 14px', alignItems: 'center', borderBottom: i < bulkRows.length - 1 ? '1px solid var(--sand)' : 'none', background: 'var(--warm)' }}>
+                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)' }}>{r.name}</span>
+                        <code style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', background: 'var(--cream)', padding: '2px 6px', borderRadius: '3px', border: '1px solid var(--sand)' }}>{r.code}</code>
+                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.email || '–'}</span>
+                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: r.max_companions > 0 ? 'var(--olive)' : 'var(--muted)', fontWeight: r.max_companions > 0 ? 700 : 400, textAlign: 'center' }}>
+                          {r.max_companions > 0 ? `+${r.max_companions}` : '–'}
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleBulkImport}
-                  className="btn-primary"
-                  style={{ width: '100%' }}
-                  disabled={bulkImporting}
-                >
+                <button type="button" onClick={handleBulkImport} className="btn-primary" style={{ width: '100%' }} disabled={bulkImporting}>
                   {bulkImporting ? 'Importando...' : `Importar ${bulkRows.length} invitados`}
                 </button>
               </>
             )}
 
-            {/* Step: done */}
             {bulkStep === 'done' && bulkResult && (
               <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                <div style={{ fontSize: '40px', marginBottom: '16px' }}>
-                  {bulkResult.failed === 0 ? '✓' : '⚠'}
-                </div>
+                <div style={{ fontSize: '40px', marginBottom: '16px' }}>{bulkResult.failed === 0 ? '✓' : '⚠'}</div>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '26px', color: 'var(--olive)', marginBottom: '12px' }}>
                   {bulkResult.failed === 0 ? 'Importación completada' : 'Importación con errores'}
                 </h2>
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '28px' }}>
-                  {bulkResult.ok > 0 && <><strong style={{ color: 'var(--olive)' }}>{bulkResult.ok}</strong> invitados importados correctamente.<br /></>}
-                  {bulkResult.failed > 0 && <><strong style={{ color: '#8B2020' }}>{bulkResult.failed}</strong> no pudieron importarse (código duplicado u otro error).</>}
+                  {bulkResult.ok > 0 && <><strong style={{ color: 'var(--olive)' }}>{bulkResult.ok}</strong> invitados importados.<br /></>}
+                  {bulkResult.failed > 0 && <><strong style={{ color: '#8B2020' }}>{bulkResult.failed}</strong> no pudieron importarse.</>}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setShowBulk(false)}
-                  className="btn-primary"
-                  style={{ minWidth: '160px' }}
-                >
-                  Cerrar
-                </button>
+                <button type="button" onClick={() => setShowBulk(false)} className="btn-primary" style={{ minWidth: '160px' }}>Cerrar</button>
               </div>
             )}
           </div>
