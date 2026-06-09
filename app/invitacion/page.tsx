@@ -201,7 +201,7 @@ export default function InvitacionPage() {
             </button>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)' }}>
               Por favor responde antes del{' '}
-              <span style={{ color: 'var(--olive)', fontWeight: 700 }}>[Fecha límite RSVP]</span>
+              <span style={{ color: 'var(--olive)', fontWeight: 700 }}>01 de Julio, 2026</span>
             </p>
           </div>
         )}
