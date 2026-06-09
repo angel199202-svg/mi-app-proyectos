@@ -122,21 +122,111 @@ function InvitacionContent() {
     setStep('done')
   }
 
-  return (
-    <div style={{
-      minHeight: '100dvh',
-      background: 'var(--cream)',
-      display: 'flex',
-      alignItems: step === 'invitation' ? 'flex-start' : 'center',
-      justifyContent: 'center',
-      padding: step === 'invitation' ? '0' : '40px 24px',
-    }}>
+  if (step === 'invitation' && guest) return (
+    <div style={{ background: 'var(--cream)' }}>
       <Link href="/" style={{ position: 'fixed', top: '24px', left: '24px', fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.6, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 10 }}>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M6 2L1 7l5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
         Inicio
       </Link>
 
-      <div style={{ width: '100%', maxWidth: step === 'invitation' ? '100%' : 480, animation: 'fade-up 0.6s ease-out both' }}>
+      {/* ① Hero — ocupa toda la pantalla */}
+      <section style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px 60px', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '32px' }}>
+          Boda Pandaneiros &nbsp;·&nbsp; Invitación personal
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '18px', color: 'var(--muted)', marginBottom: '8px' }}>
+          Con mucho amor, invitamos a
+        </p>
+        <h1 style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(44px, 10vw, 72px)', color: 'var(--olive)', lineHeight: 1.15, marginBottom: '20px' }}>
+          {guest.name}
+        </h1>
+        <div style={{ width: '48px', height: '1px', background: 'var(--rose)', margin: '0 auto 20px' }} />
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--text)', opacity: 0.75, marginBottom: '6px' }}>
+          a celebrar nuestra boda
+        </p>
+        <p style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(32px, 8vw, 52px)', color: 'var(--olive)' }}>
+          Angel &amp; Milagros
+        </p>
+        <div style={{ marginTop: '56px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', animation: 'pulse-soft 2.5s ease-in-out infinite', opacity: 0.55 }}>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--olive)' }}>
+            Desliza para ver los detalles
+          </p>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3v10M4 9l4 4 4-4" stroke="var(--olive)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </section>
+
+      {/* ② Fecha y lugar */}
+      <section style={{ padding: '80px 24px', background: 'var(--warm)', borderTop: '1px solid var(--sand)', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
+          Cuándo y dónde
+        </p>
+        <p style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(40px, 9vw, 64px)', color: 'var(--olive)', lineHeight: 1.1, marginBottom: '16px' }}>
+          17 · 07 · 2026
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '20px', color: 'var(--text)', opacity: 0.8, marginBottom: '32px' }}>
+          Viernes · 16:00 hrs
+        </p>
+        <div style={{ width: '32px', height: '1px', background: 'var(--rose)', margin: '0 auto 32px' }} />
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '22px', color: 'var(--olive)', marginBottom: '6px' }}>
+          Residencias Valle Alto
+        </p>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', letterSpacing: '0.04em' }}>
+          Valencia, Estado Carabobo
+        </p>
+      </section>
+
+      {/* ③ Vestimenta */}
+      <section style={{ padding: '80px 24px', background: 'var(--cream)', borderTop: '1px solid var(--sand)', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '20px' }}>
+          Vestimenta
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(24px, 5vw, 36px)', color: 'var(--olive)', marginBottom: '16px' }}>
+          Semi formal · Chic garden
+        </p>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.65, maxWidth: '320px', margin: '0 auto' }}>
+          Colores suaves, naturales o pasteles. Evita tonos muy oscuros o demasiado casuales.
+        </p>
+      </section>
+
+      {/* ④ Personas incluidas */}
+      <section style={{ padding: '80px 24px', background: 'var(--warm)', borderTop: '1px solid var(--sand)', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '20px' }}>
+          Tu invitación incluye
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(28px, 6vw, 44px)', color: 'var(--olive)', lineHeight: 1.2 }}>
+          {guest.max_adults} Adulto{guest.max_adults !== 1 ? 's' : ''}
+          {guest.max_children > 0 && <span> · {guest.max_children} Niño{guest.max_children !== 1 ? 's' : ''}</span>}
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '15px', color: 'var(--muted)', marginTop: '12px' }}>
+          {guest.max_adults + guest.max_children} {guest.max_adults + guest.max_children === 1 ? 'persona' : 'personas'} en total
+        </p>
+      </section>
+
+      {/* ⑤ CTA */}
+      <section style={{ padding: '80px 24px 100px', background: 'var(--cream)', borderTop: '1px solid var(--sand)', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '18px', color: 'var(--muted)', marginBottom: '32px', lineHeight: 1.6 }}>
+          Nos hace muy felices tenerte con nosotros.<br />Por favor confirma tu asistencia.
+        </p>
+        <button className="btn-primary" style={{ minWidth: '260px', marginBottom: '16px' }} onClick={() => setStep('form')}>
+          Confirmar mi asistencia
+        </button>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)' }}>
+          Antes del <span style={{ color: 'var(--olive)', fontWeight: 700 }}>01 de Julio, 2026</span>
+        </p>
+      </section>
+    </div>
+  )
+
+  return (
+    <div style={{ minHeight: '100dvh', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <Link href="/" style={{ position: 'fixed', top: '24px', left: '24px', fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.6, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 10 }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M6 2L1 7l5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+        Inicio
+      </Link>
+
+      <div style={{ width: '100%', maxWidth: 480, animation: 'fade-up 0.6s ease-out both' }}>
 
         {/* STEP: code entry */}
         {step === 'code' && (
@@ -167,108 +257,6 @@ function InvitacionContent() {
           </div>
         )}
 
-        {/* STEP: show invitation — scroll journey */}
-        {step === 'invitation' && guest && (
-          <div style={{ textAlign: 'center' }}>
-
-            {/* ① Hero — ocupa toda la pantalla */}
-            <section style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px 60px' }}>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '32px' }}>
-                Boda Pandaneiros &nbsp;·&nbsp; Invitación personal
-              </p>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '18px', color: 'var(--muted)', marginBottom: '8px' }}>
-                Con mucho amor, invitamos a
-              </p>
-              <h1 style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(44px, 10vw, 72px)', color: 'var(--olive)', lineHeight: 1.15, marginBottom: '20px' }}>
-                {guest.name}
-              </h1>
-              <div style={{ width: '48px', height: '1px', background: 'var(--rose)', margin: '0 auto 20px' }} />
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: 'var(--text)', opacity: 0.75, marginBottom: '6px' }}>
-                a celebrar nuestra boda
-              </p>
-              <p style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(32px, 8vw, 52px)', color: 'var(--olive)' }}>
-                Angel &amp; Milagros
-              </p>
-
-              {/* Scroll hint */}
-              <div style={{ marginTop: '56px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', animation: 'pulse-soft 2.5s ease-in-out infinite', opacity: 0.55 }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--olive)' }}>
-                  Desliza para ver los detalles
-                </p>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 3v10M4 9l4 4 4-4" stroke="var(--olive)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </section>
-
-            {/* ② Fecha y lugar */}
-            <section style={{ padding: '80px 24px', background: 'var(--warm)', borderTop: '1px solid var(--sand)' }}>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
-                Cuándo y dónde
-              </p>
-              <p style={{ fontFamily: 'var(--font-script)', fontSize: 'clamp(40px, 9vw, 64px)', color: 'var(--olive)', lineHeight: 1.1, marginBottom: '16px' }}>
-                17 · 07 · 2026
-              </p>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '20px', color: 'var(--text)', opacity: 0.8, marginBottom: '32px' }}>
-                Viernes · 16:00 hrs
-              </p>
-              <div style={{ width: '32px', height: '1px', background: 'var(--rose)', margin: '0 auto 32px' }} />
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '22px', color: 'var(--olive)', marginBottom: '6px' }}>
-                Residencias Valle Alto
-              </p>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', letterSpacing: '0.04em' }}>
-                Valencia, Estado Carabobo
-              </p>
-            </section>
-
-            {/* ③ Vestimenta */}
-            <section style={{ padding: '80px 24px', background: 'var(--cream)', borderTop: '1px solid var(--sand)' }}>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '20px' }}>
-                Vestimenta
-              </p>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(24px, 5vw, 36px)', color: 'var(--olive)', marginBottom: '16px' }}>
-                Semi formal · Chic garden
-              </p>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.65, maxWidth: '320px', margin: '0 auto' }}>
-                Colores suaves, naturales o pasteles. Evita tonos muy oscuros o demasiado casuales.
-              </p>
-            </section>
-
-            {/* ④ Tu invitación — cuántas personas */}
-            <section style={{ padding: '80px 24px', background: 'var(--warm)', borderTop: '1px solid var(--sand)' }}>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '20px' }}>
-                Tu invitación incluye
-              </p>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'clamp(28px, 6vw, 44px)', color: 'var(--olive)', lineHeight: 1.2 }}>
-                {guest.max_adults} Adulto{guest.max_adults !== 1 ? 's' : ''}
-                {guest.max_children > 0 && (
-                  <span> · {guest.max_children} Niño{guest.max_children !== 1 ? 's' : ''}</span>
-                )}
-              </p>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '15px', color: 'var(--muted)', marginTop: '12px' }}>
-                {guest.max_adults + guest.max_children} {guest.max_adults + guest.max_children === 1 ? 'persona' : 'personas'} en total
-              </p>
-            </section>
-
-            {/* ⑤ CTA — confirmar */}
-            <section style={{ padding: '80px 24px 100px', background: 'var(--cream)', borderTop: '1px solid var(--sand)' }}>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '18px', color: 'var(--muted)', marginBottom: '32px', lineHeight: 1.5 }}>
-                Nos hace muy felices tenerte con nosotros.<br />Por favor confirma tu asistencia.
-              </p>
-              <button
-                className="btn-primary"
-                style={{ minWidth: '260px', marginBottom: '16px' }}
-                onClick={() => setStep('form')}
-              >
-                Confirmar mi asistencia
-              </button>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)' }}>
-                Antes del <span style={{ color: 'var(--olive)', fontWeight: 700 }}>01 de Julio, 2026</span>
-              </p>
-            </section>
-
-          </div>
-        )}
 
         {/* STEP: RSVP form */}
         {step === 'form' && guest && (
