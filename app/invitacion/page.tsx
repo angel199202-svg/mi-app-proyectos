@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { CelebrationIcon, HeartEnvelopeIcon, AttendingIcon } from '../components/Icons'
@@ -20,6 +21,7 @@ type Guest = {
 type Step = 'code' | 'invitation' | 'form' | 'done'
 
 export default function InvitacionPage() {
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<Step>('code')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,6 +36,16 @@ export default function InvitacionPage() {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Auto-lookup when ?code= is present in URL
+  useEffect(() => {
+    const urlCode = searchParams.get('code')
+    if (urlCode && step === 'code') {
+      setCode(urlCode.toUpperCase())
+      lookupCode(urlCode.toUpperCase())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Keep companion names array in sync with extra adults (titular not counted)
   const extraAdults = Math.max(0, adultsCount - 1)
   useEffect(() => {
@@ -44,16 +56,15 @@ export default function InvitacionPage() {
     })
   }, [extraAdults])
 
-  async function handleLookup(e: React.FormEvent) {
-    e.preventDefault()
-    if (!code.trim()) return
+  async function lookupCode(raw: string) {
+    if (!raw.trim()) return
     setLoading(true)
     setError('')
 
     const { data, error: err } = await supabase
       .from('wedding_guests')
       .select('id, name, code, max_adults, max_children, rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, rsvp_message')
-      .eq('code', code.trim().toUpperCase())
+      .eq('code', raw.trim().toUpperCase())
       .single()
 
     setLoading(false)
@@ -79,6 +90,11 @@ export default function InvitacionPage() {
       setChildrenCount(0)
       setStep('invitation')
     }
+  }
+
+  async function handleLookup(e: React.FormEvent) {
+    e.preventDefault()
+    await lookupCode(code)
   }
 
   async function handleSubmit(e: React.FormEvent) {
