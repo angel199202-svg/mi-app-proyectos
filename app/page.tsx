@@ -288,10 +288,7 @@ export default function WeddingPage() {
                 animation: 'fade-up 1.1s 1.25s cubic-bezier(0.16, 1, 0.3, 1) both',
               }}
             >
-              <Link href="/invitacion" className="btn-primary">
-                Confirmar asistencia
-              </Link>
-              <Link href="/lugar" className="btn-outline">
+              <Link href="/lugar" className="btn-primary">
                 Ver el lugar
               </Link>
             </div>
