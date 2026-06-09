@@ -167,8 +167,8 @@ export default function LugarPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', maxWidth: 400, margin: '0 auto' }}>
             {[
-              { label: 'Mujeres', suggestion: 'Vestido midi o largo, colores suaves o florales' },
-              { label: 'Hombres', suggestion: 'Traje claro, guayabera o camisa formal' },
+              { label: 'Mujeres', suggestion: 'Vestido o conjunto casual elegante, colores suaves o florales' },
+              { label: 'Hombres', suggestion: 'Pantalón de vestir y camisa, sin corbata ni traje' },
             ].map((item) => (
               <div
                 key={item.label}
