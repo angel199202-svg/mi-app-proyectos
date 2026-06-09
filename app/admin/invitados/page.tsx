@@ -9,7 +9,8 @@ type Guest = {
   code: string
   name: string
   email: string | null
-  max_companions: number
+  max_adults: number
+  max_children: number
   rsvp_attending: boolean | null
   rsvp_plus_one: boolean | null
   rsvp_plus_one_name: string | null
@@ -23,17 +24,19 @@ type FormData = {
   code: string
   name: string
   email: string
-  max_companions: number
+  max_adults: number
+  max_children: number
 }
 
 type BulkRow = {
   name: string
   email: string
-  max_companions: number
+  max_adults: number
+  max_children: number
   code: string
 }
 
-const EMPTY_FORM: FormData = { code: '', name: '', email: '', max_companions: 0 }
+const EMPTY_FORM: FormData = { code: '', name: '', email: '', max_adults: 1, max_children: 0 }
 
 function rsvpBadge(guest: Guest) {
   if (guest.rsvp_attending === null) return { label: 'Sin respuesta', bg: 'var(--sand)', color: 'var(--muted)' }
@@ -59,18 +62,20 @@ function parseBulkText(text: string): BulkRow[] {
     .map((l) => l.trim())
     .filter(Boolean)
     .map((line) => {
-      const [rawName = '', rawEmail = '', rawPlus = ''] = line.split(',').map((p) => p.trim())
-      const name = rawName
-      const email = rawEmail
-      const plusLower = rawPlus.toLowerCase()
-      const max_companions = /^\d+$/.test(rawPlus)
-        ? parseInt(rawPlus)
-        : ['true', '1', 'si', 'sí', 'yes', 'x'].includes(plusLower) ? 1 : 0
+      const parts = line.split(',').map((p) => p.trim())
+      const name     = parts[0] ?? ''
+      const email    = parts[1] ?? ''
+      const rawA     = parts[2] ?? ''
+      const rawC     = parts[3] ?? ''
+      // 3rd col: adults count or legacy boolean (true/si/x = 2 adults)
+      const legacyPlus = ['true', 'si', 'sí', 'yes', 'x'].includes(rawA.toLowerCase())
+      const max_adults   = /^\d+$/.test(rawA) ? Math.max(1, parseInt(rawA)) : legacyPlus ? 2 : 1
+      const max_children = /^\d+$/.test(rawC) ? parseInt(rawC) : 0
       let code = generateCode(name)
       let tries = 0
       while (usedCodes.has(code) && tries < 20) { code = generateCode(name); tries++ }
       usedCodes.add(code)
-      return { name, email, max_companions, code }
+      return { name, email, max_adults, max_children, code }
     })
     .filter((r) => r.name)
 }
@@ -117,7 +122,7 @@ export default function InvitadosPage() {
 
   function openEdit(g: Guest) {
     setEditing(g)
-    setForm({ code: g.code, name: g.name, email: g.email ?? '', max_companions: g.max_companions })
+    setForm({ code: g.code, name: g.name, email: g.email ?? '', max_adults: g.max_adults, max_children: g.max_children })
     setError('')
     setShowModal(true)
   }
@@ -132,8 +137,10 @@ export default function InvitadosPage() {
       code:           form.code.trim().toUpperCase(),
       name:           form.name.trim(),
       email:          form.email.trim() || null,
-      max_companions: form.max_companions,
-      allow_plus_one: form.max_companions > 0,
+      max_adults:     form.max_adults,
+      max_children:   form.max_children,
+      max_companions: form.max_adults + form.max_children - 1,
+      allow_plus_one: form.max_adults + form.max_children > 1,
     }
 
     let err
@@ -189,24 +196,20 @@ export default function InvitadosPage() {
     const payload = bulkRows.map((r) => ({
       name:           r.name,
       email:          r.email || null,
-      max_companions: r.max_companions,
-      allow_plus_one: r.max_companions > 0,
+      max_adults:     r.max_adults,
+      max_children:   r.max_children,
+      max_companions: r.max_adults + r.max_children - 1,
+      allow_plus_one: r.max_adults + r.max_children > 1,
       code:           r.code,
     }))
 
-    const { data, error: batchErr } = await supabase
-      .from('wedding_guests')
-      .insert(payload)
-      .select('id')
-
-    let ok = 0
-    let failed = 0
+    const { data, error: batchErr } = await supabase.from('wedding_guests').insert(payload).select('id')
+    let ok = 0; let failed = 0
 
     if (batchErr) {
       for (const row of payload) {
         const { error: rowErr } = await supabase.from('wedding_guests').insert(row)
-        if (rowErr) failed++
-        else ok++
+        if (rowErr) failed++; else ok++
       }
     } else {
       ok = data?.length ?? payload.length
@@ -228,6 +231,14 @@ export default function InvitadosPage() {
     return matchSearch && matchRsvp
   })
 
+  const totalCapacity    = guests.reduce((s, g) => s + g.max_adults + g.max_children, 0)
+  const totalAdultsCap   = guests.reduce((s, g) => s + g.max_adults, 0)
+  const totalChildrenCap = guests.reduce((s, g) => s + g.max_children, 0)
+  const totalConfirmed   = guests.filter((g) => g.rsvp_attending === true).reduce((s, g) => {
+    const companions = g.rsvp_plus_one_name ? g.rsvp_plus_one_name.split(',').length : g.rsvp_plus_one ? 1 : 0
+    return s + 1 + companions
+  }, 0)
+
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px',
     fontFamily: 'var(--font-body)', fontSize: '14px',
@@ -242,6 +253,21 @@ export default function InvitadosPage() {
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   }
 
+  function Stepper({ label, value, min = 0, max = 20, onChange }: { label: string; value: number; min?: number; max?: number; onChange: (v: number) => void }) {
+    return (
+      <div>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px' }}>{label}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <button type="button" style={stepperBtnStyle} onClick={() => onChange(Math.max(min, value - 1))}>−</button>
+          <div style={{ textAlign: 'center', minWidth: '48px' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 300, color: 'var(--olive)' }}>{value}</span>
+          </div>
+          <button type="button" style={stepperBtnStyle} onClick={() => onChange(Math.min(max, value + 1))}>+</button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       {/* Header */}
@@ -251,14 +277,13 @@ export default function InvitadosPage() {
             Invitados
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginTop: '4px' }}>
-            {guests.length} invitados
-          {' · '}
-          {guests.reduce((sum, g) => sum + 1 + g.max_companions, 0)} personas (capacidad)
-          {' · '}
-          {guests.filter((g) => g.rsvp_attending === true).reduce((sum, g) => {
-            const confirmed = g.rsvp_plus_one_name ? g.rsvp_plus_one_name.split(',').length : g.rsvp_plus_one ? 1 : 0
-            return sum + 1 + confirmed
-          }, 0)} personas confirmadas
+            {guests.length} invitaciones
+            {' · '}
+            <span title={`${totalAdultsCap} adultos + ${totalChildrenCap} niños`}>
+              {totalCapacity} personas (capacidad)
+            </span>
+            {' · '}
+            {totalConfirmed} confirmadas
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -274,13 +299,9 @@ export default function InvitadosPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        <input
-          type="text"
-          placeholder="Buscar por nombre o código..."
-          value={search}
+        <input type="text" placeholder="Buscar por nombre o código..." value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ ...inputStyle, width: 'auto', flex: '1 1 200px', minWidth: '180px' }}
-        />
+          style={{ ...inputStyle, width: 'auto', flex: '1 1 200px', minWidth: '180px' }} />
         {(['all', 'pending', 'yes', 'no'] as const).map((f) => (
           <button key={f} onClick={() => setFilterRsvp(f)}
             style={{
@@ -314,6 +335,7 @@ export default function InvitadosPage() {
 
           {filtered.map((g, i) => {
             const badge = rsvpBadge(g)
+            const total = g.max_adults + g.max_children
             return (
               <div key={g.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto auto', padding: '14px 16px', alignItems: 'center', gap: '8px', borderBottom: i < filtered.length - 1 ? '1px solid var(--sand)' : 'none', background: 'var(--warm)' }}>
                 <div>
@@ -328,12 +350,10 @@ export default function InvitadosPage() {
                   {g.code}
                 </code>
 
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 400, color: 'var(--olive)' }}>
-                    {1 + g.max_companions}
-                  </span>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.1em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: '1px' }}>
-                    {g.max_companions > 0 ? `1+${g.max_companions}` : 'solo'}
+                <div style={{ textAlign: 'center', minWidth: '60px' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 400, color: 'var(--olive)' }}>{total}</span>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: '1px', whiteSpace: 'nowrap' }}>
+                    {g.max_adults}A{g.max_children > 0 ? ` · ${g.max_children}N` : ''}
                   </p>
                 </div>
 
@@ -365,9 +385,7 @@ export default function InvitadosPage() {
       {/* RSVP notes */}
       {guests.some((g) => g.rsvp_dietary || g.rsvp_message) && (
         <div style={{ marginTop: '32px' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '22px', color: 'var(--olive)', marginBottom: '16px' }}>
-            Notas de invitados
-          </h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '22px', color: 'var(--olive)', marginBottom: '16px' }}>Notas de invitados</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {guests.filter((g) => g.rsvp_dietary || g.rsvp_message).map((g) => (
               <div key={g.id} style={{ background: 'var(--warm)', border: '1px solid var(--sand)', borderRadius: '4px', padding: '16px 20px' }}>
@@ -384,7 +402,7 @@ export default function InvitadosPage() {
       {showModal && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(58,58,40,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 50, animation: 'fade-in 0.15s ease-out both' }}>
-          <div style={{ background: 'var(--warm)', borderRadius: '4px', padding: '32px', width: '100%', maxWidth: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'fade-up 0.2s ease-out both' }}>
+          <div style={{ background: 'var(--warm)', borderRadius: '4px', padding: '32px', width: '100%', maxWidth: 460, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'fade-up 0.2s ease-out both' }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '24px' }}>
               {editing ? 'Editar invitado' : 'Nuevo invitado'}
             </h2>
@@ -399,23 +417,23 @@ export default function InvitadosPage() {
                     const name = e.target.value
                     setForm((f) => ({ ...f, name, code: editing ? f.code : generateCode(name) }))
                   }}
-                  required style={inputStyle} placeholder="María González" />
+                  required style={inputStyle} placeholder="Familia González" />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                    Código de invitación *
+                    Código *
                   </label>
                   <button type="button" onClick={() => setForm((f) => ({ ...f, code: generateCode(f.name) }))}
-                    style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.06em' }}>
+                    style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer' }}>
                     ↺ Regenerar
                   </button>
                 </div>
                 <input type="text" value={form.code}
                   onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
                   required style={{ ...inputStyle, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'monospace', fontSize: '15px' }}
-                  placeholder="MARI-123" />
+                  placeholder="GONZ-123" />
               </div>
 
               <div>
@@ -424,32 +442,26 @@ export default function InvitadosPage() {
                 </label>
                 <input type="email" value={form.email}
                   onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  style={inputStyle} placeholder="maria@ejemplo.com" />
+                  style={inputStyle} placeholder="familia@ejemplo.com" />
               </div>
 
-              {/* Companion stepper */}
-              <div>
-                <label style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: '10px' }}>
-                  Acompañantes permitidos
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <button type="button" style={stepperBtnStyle}
-                    onClick={() => setForm((f) => ({ ...f, max_companions: Math.max(0, f.max_companions - 1) }))}>
-                    −
-                  </button>
-                  <div style={{ textAlign: 'center', minWidth: '80px' }}>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 300, color: 'var(--olive)' }}>
-                      {form.max_companions}
-                    </span>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--muted)', letterSpacing: '0.08em', marginTop: '2px' }}>
-                      {form.max_companions === 0 ? 'sin acompañante' : form.max_companions === 1 ? 'acompañante' : 'acompañantes'}
-                    </p>
-                  </div>
-                  <button type="button" style={stepperBtnStyle}
-                    onClick={() => setForm((f) => ({ ...f, max_companions: Math.min(10, f.max_companions + 1) }))}>
-                    +
-                  </button>
+              {/* Steppers */}
+              <div style={{ background: 'var(--cream)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '16px 20px' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px' }}>
+                  Capacidad de la invitación
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <Stepper label="Adultos" value={form.max_adults} min={1}
+                    onChange={(v) => setForm((f) => ({ ...f, max_adults: v }))} />
+                  <Stepper label="Niños" value={form.max_children} min={0}
+                    onChange={(v) => setForm((f) => ({ ...f, max_children: v }))} />
                 </div>
+                <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '14px', color: 'var(--muted)', marginTop: '14px', textAlign: 'center' }}>
+                  {form.max_adults} adulto{form.max_adults !== 1 ? 's' : ''}
+                  {form.max_children > 0 ? ` · ${form.max_children} niño${form.max_children !== 1 ? 's' : ''}` : ''}
+                  {' — '}
+                  {form.max_adults + form.max_children} {form.max_adults + form.max_children === 1 ? 'persona' : 'personas'} en total
+                </p>
               </div>
 
               {error && <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#8B2020' }}>{error}</p>}
@@ -457,7 +469,7 @@ export default function InvitadosPage() {
               <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
                 <button type="button" onClick={() => setShowModal(false)} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
                 <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={saving}>
-                  {saving ? 'Guardando...' : editing ? 'Guardar cambios' : 'Agregar invitado'}
+                  {saving ? 'Guardando...' : editing ? 'Guardar cambios' : 'Agregar'}
                 </button>
               </div>
             </form>
@@ -469,24 +481,20 @@ export default function InvitadosPage() {
       {showBulk && (
         <div onClick={(e) => { if (e.target === e.currentTarget && !bulkImporting) setShowBulk(false) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(58,58,40,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 50, animation: 'fade-in 0.15s ease-out both' }}>
-          <div style={{ background: 'var(--warm)', borderRadius: '4px', padding: '32px', width: '100%', maxWidth: bulkStep === 'preview' ? 680 : 520, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'fade-up 0.2s ease-out both', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: 'var(--warm)', borderRadius: '4px', padding: '32px', width: '100%', maxWidth: bulkStep === 'preview' ? 720 : 540, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'fade-up 0.2s ease-out both', maxHeight: '90vh', overflowY: 'auto' }}>
 
             {bulkStep === 'input' && (
               <>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '6px' }}>
-                  Carga masiva de invitados
-                </h2>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginBottom: '20px', lineHeight: 1.55 }}>
-                  Un invitado por línea. Formato:
-                </p>
-                <div style={{ background: 'var(--cream)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '12px 16px', marginBottom: '20px', fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', lineHeight: 1.9 }}>
-                  <div>Nombre Apellido</div>
-                  <div>Nombre Apellido, email@ejemplo.com</div>
-                  <div>Nombre Apellido, , 1&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 1 acompañante</span></div>
-                  <div>Nombre Apellido, email@ejemplo.com, 3&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 3 acompañantes</span></div>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '6px' }}>Carga masiva</h2>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginBottom: '20px' }}>Un invitado por línea:</p>
+                <div style={{ background: 'var(--cream)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '12px 16px', marginBottom: '20px', fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', lineHeight: 2 }}>
+                  <div>Nombre&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 1 adulto</span></div>
+                  <div>Nombre, email&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 1 adulto</span></div>
+                  <div>Nombre, email, 2&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 2 adultos</span></div>
+                  <div>Nombre, email, 2, 3&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← 2 adultos + 3 niños</span></div>
                 </div>
                 <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)}
-                  placeholder={'María González\nCarlos Rodríguez, carlos@email.com\nAna Martínez, ana@email.com, 2'}
+                  placeholder={'Familia González, fam@email.com, 2, 3\nMaría Rodríguez, maria@email.com\nCarlos Pérez, , 2'}
                   rows={10}
                   style={{ ...inputStyle, resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: 1.7, marginBottom: '20px' }}
                   autoFocus />
@@ -494,7 +502,7 @@ export default function InvitadosPage() {
                   <button type="button" onClick={() => setShowBulk(false)} className="btn-outline" style={{ flex: 1 }}>Cancelar</button>
                   <button type="button" onClick={handleBulkPreview} className="btn-primary" style={{ flex: 2 }}
                     disabled={!parseBulkText(bulkText).length}>
-                    Vista previa ({parseBulkText(bulkText).length} invitados)
+                    Vista previa ({parseBulkText(bulkText).length} invitaciones)
                   </button>
                 </div>
               </>
@@ -505,7 +513,9 @@ export default function InvitadosPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                   <div>
                     <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '4px' }}>Vista previa</h2>
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>{bulkRows.length} invitados</p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>
+                      {bulkRows.length} invitaciones · {bulkRows.reduce((s, r) => s + r.max_adults + r.max_children, 0)} personas
+                    </p>
                   </div>
                   <button type="button" onClick={() => setBulkStep('input')}
                     style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer', paddingTop: '4px' }}>
@@ -513,27 +523,29 @@ export default function InvitadosPage() {
                   </button>
                 </div>
                 <div style={{ border: '1px solid var(--sand)', borderRadius: '4px', overflow: 'hidden', marginBottom: '20px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 70px', padding: '8px 14px', background: 'var(--cream)', borderBottom: '1px solid var(--sand)' }}>
-                    {['Nombre', 'Código', 'Email', 'Pers.'].map((h) => (
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1fr', padding: '8px 14px', background: 'var(--cream)', borderBottom: '1px solid var(--sand)' }}>
+                    {['Nombre', 'Código', 'Email', 'Personas'].map((h) => (
                       <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>{h}</span>
                     ))}
                   </div>
                   <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
                     {bulkRows.map((r, i) => (
-                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 70px', padding: '10px 14px', alignItems: 'center', borderBottom: i < bulkRows.length - 1 ? '1px solid var(--sand)' : 'none', background: 'var(--warm)' }}>
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1fr', padding: '10px 14px', alignItems: 'center', borderBottom: i < bulkRows.length - 1 ? '1px solid var(--sand)' : 'none', background: 'var(--warm)' }}>
                         <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)' }}>{r.name}</span>
                         <code style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', background: 'var(--cream)', padding: '2px 6px', borderRadius: '3px', border: '1px solid var(--sand)' }}>{r.code}</code>
                         <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.email || '–'}</span>
-                        <div style={{ textAlign: 'center' }}>
-                          <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--olive)' }}>{1 + r.max_companions}</span>
-                          {r.max_companions > 0 && <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>1+{r.max_companions}</p>}
+                        <div>
+                          <span style={{ fontFamily: 'var(--font-display)', fontSize: '15px', color: 'var(--olive)' }}>{r.max_adults + r.max_children}</span>
+                          <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                            {r.max_adults}A{r.max_children > 0 ? ` · ${r.max_children}N` : ''}
+                          </p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
                 <button type="button" onClick={handleBulkImport} className="btn-primary" style={{ width: '100%' }} disabled={bulkImporting}>
-                  {bulkImporting ? 'Importando...' : `Importar ${bulkRows.length} invitados`}
+                  {bulkImporting ? 'Importando...' : `Importar ${bulkRows.length} invitaciones`}
                 </button>
               </>
             )}
@@ -545,7 +557,7 @@ export default function InvitadosPage() {
                   {bulkResult.failed === 0 ? 'Importación completada' : 'Importación con errores'}
                 </h2>
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '28px' }}>
-                  {bulkResult.ok > 0 && <><strong style={{ color: 'var(--olive)' }}>{bulkResult.ok}</strong> invitados importados.<br /></>}
+                  {bulkResult.ok > 0 && <><strong style={{ color: 'var(--olive)' }}>{bulkResult.ok}</strong> invitaciones importadas.<br /></>}
                   {bulkResult.failed > 0 && <><strong style={{ color: '#8B2020' }}>{bulkResult.failed}</strong> no pudieron importarse.</>}
                 </p>
                 <button type="button" onClick={() => setShowBulk(false)} className="btn-primary" style={{ minWidth: '160px' }}>Cerrar</button>

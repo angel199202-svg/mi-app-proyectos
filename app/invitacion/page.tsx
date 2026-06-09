@@ -9,7 +9,8 @@ type Guest = {
   id: string
   name: string
   code: string
-  max_companions: number
+  max_adults: number
+  max_children: number
   rsvp_attending: boolean | null
   rsvp_plus_one: boolean | null
   rsvp_plus_one_name: string | null
@@ -26,30 +27,32 @@ export default function InvitacionPage() {
   const [guest, setGuest] = useState<Guest | null>(null)
 
   const [attending, setAttending] = useState<boolean | null>(null)
-  const [companionsCount, setCompanionsCount] = useState(0)
+  const [adultsCount, setAdultsCount] = useState(1)
+  const [childrenCount, setChildrenCount] = useState(0)
   const [companionNames, setCompanionNames] = useState<string[]>([])
   const [dietary, setDietary] = useState('')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Keep companion names array in sync with extra adults (titular not counted)
+  const extraAdults = Math.max(0, adultsCount - 1)
   useEffect(() => {
     setCompanionNames((prev) => {
       const arr = [...prev]
-      while (arr.length < companionsCount) arr.push('')
-      return arr.slice(0, companionsCount)
+      while (arr.length < extraAdults) arr.push('')
+      return arr.slice(0, extraAdults)
     })
-  }, [companionsCount])
+  }, [extraAdults])
 
   async function handleLookup(e: React.FormEvent) {
     e.preventDefault()
     if (!code.trim()) return
-
     setLoading(true)
     setError('')
 
     const { data, error: err } = await supabase
       .from('wedding_guests')
-      .select('id, name, code, max_companions, rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, rsvp_message')
+      .select('id, name, code, max_adults, max_children, rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, rsvp_message')
       .eq('code', code.trim().toUpperCase())
       .single()
 
@@ -67,11 +70,13 @@ export default function InvitacionPage() {
       const names = data.rsvp_plus_one_name
         ? data.rsvp_plus_one_name.split(',').map((s: string) => s.trim())
         : []
-      setCompanionsCount(names.length)
+      setAdultsCount(1 + names.length)
       setCompanionNames(names)
       setMessage(data.rsvp_message ?? '')
       setStep('done')
     } else {
+      setAdultsCount(data.max_adults)
+      setChildrenCount(0)
       setStep('invitation')
     }
   }
@@ -79,17 +84,17 @@ export default function InvitacionPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!guest || attending === null) return
-
     setSubmitting(true)
 
     const filledNames = companionNames.filter((n) => n.trim())
+    const hasOthers = attending && (adultsCount > 1 || childrenCount > 0)
 
     const { error: err } = await supabase
       .from('wedding_guests')
       .update({
         rsvp_attending:     attending,
-        rsvp_plus_one:      attending && companionsCount > 0,
-        rsvp_plus_one_name: attending && filledNames.length > 0 ? filledNames.join(', ') : null,
+        rsvp_plus_one:      hasOthers,
+        rsvp_plus_one_name: hasOthers && filledNames.length > 0 ? filledNames.join(', ') : null,
         rsvp_dietary:       dietary.trim() || null,
         rsvp_message:       message.trim() || null,
         rsvp_at:            new Date().toISOString(),
@@ -97,43 +102,14 @@ export default function InvitacionPage() {
       .eq('id', guest.id)
 
     setSubmitting(false)
-
-    if (err) {
-      setError('Hubo un error al guardar tu respuesta. Inténtalo de nuevo.')
-      return
-    }
-
+    if (err) { setError('Hubo un error al guardar tu respuesta. Inténtalo de nuevo.'); return }
     setStep('done')
   }
 
-  const companionLabel = (n: number) =>
-    n === 0 ? 'Ninguno' : n === 1 ? '1 acompañante' : `${n} acompañantes`
-
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        background: 'var(--cream)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 24px',
-      }}
-    >
-      <Link
-        href="/"
-        style={{
-          position: 'fixed', top: '24px', left: '24px',
-          fontFamily: 'var(--font-body)', fontSize: '11px',
-          letterSpacing: '0.12em', textTransform: 'uppercase',
-          color: 'var(--olive)', opacity: 0.6, textDecoration: 'none',
-          display: 'flex', alignItems: 'center', gap: '6px',
-          transition: 'opacity 0.2s',
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M13 7H1M6 2L1 7l5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
+    <div style={{ minHeight: '100dvh', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <Link href="/" style={{ position: 'fixed', top: '24px', left: '24px', fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.6, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M6 2L1 7l5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
         Inicio
       </Link>
 
@@ -147,23 +123,18 @@ export default function InvitacionPage() {
               <div style={{ width: '5px', height: '5px', background: 'var(--rose)', borderRadius: '50%' }} />
               <div style={{ width: '48px', height: '1px', background: 'var(--rose)' }} />
             </div>
-            <p style={{ fontFamily: 'var(--font-script)', fontSize: '48px', color: 'var(--olive)', marginBottom: '8px' }}>
-              Tu invitación
-            </p>
+            <p style={{ fontFamily: 'var(--font-script)', fontSize: '48px', color: 'var(--olive)', marginBottom: '8px' }}>Tu invitación</p>
             <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '16px', color: 'var(--muted)', marginBottom: '44px' }}>
               Ingresa el código que encontrarás en tu tarjeta
             </p>
             <form onSubmit={handleLookup}>
               <div style={{ marginBottom: '16px', textAlign: 'left' }}>
                 <label className="invite-label">Código de invitación</label>
-                <input
-                  type="text" value={code}
+                <input type="text" value={code}
                   onChange={(e) => { setCode(e.target.value); setError('') }}
-                  placeholder="Ej: ANGEL-001"
-                  className="invite-field"
+                  placeholder="Ej: GONZ-123" className="invite-field"
                   style={{ textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', fontSize: '18px' }}
-                  autoFocus autoCapitalize="characters"
-                />
+                  autoFocus autoCapitalize="characters" />
               </div>
               {error && <p className="invite-error">{error}</p>}
               <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={loading || !code.trim()}>
@@ -178,7 +149,6 @@ export default function InvitacionPage() {
           <div style={{ textAlign: 'center' }}>
             <div className="invite-card" style={{ marginBottom: '32px' }}>
               <div className="invite-card-bar" />
-
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '28px' }}>
                 Boda Pandaneiros &nbsp;·&nbsp; Invitación personal
               </p>
@@ -192,27 +162,22 @@ export default function InvitacionPage() {
               <p style={{ fontFamily: 'var(--font-display)', fontSize: '17px', color: 'var(--text)', opacity: 0.8, marginBottom: '4px' }}>
                 a celebrar nuestra boda
               </p>
-              <p style={{ fontFamily: 'var(--font-script)', fontSize: '32px', color: 'var(--olive)' }}>
+              <p style={{ fontFamily: 'var(--font-script)', fontSize: '32px', color: 'var(--olive)', marginBottom: '24px' }}>
                 Angel &amp; Milagros
               </p>
 
-              {/* Companion count indicator */}
-              {guest.max_companions > 0 && (
-                <div style={{
-                  marginTop: '24px', padding: '12px 20px',
-                  background: 'var(--cream)', borderRadius: '3px',
-                  border: '1px solid var(--sand)',
-                }}>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '4px' }}>
-                    Esta invitación incluye
-                  </p>
-                  <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '18px', color: 'var(--olive)' }}>
-                    {guest.max_companions === 1
-                      ? 'un acompañante'
-                      : `hasta ${guest.max_companions} acompañantes`}
-                  </p>
-                </div>
-              )}
+              {/* Headcount indicator */}
+              <div style={{ background: 'var(--cream)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '14px 20px' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '6px' }}>
+                  Esta invitación es para
+                </p>
+                <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '20px', color: 'var(--olive)', lineHeight: 1.3 }}>
+                  {guest.max_adults} Adulto{guest.max_adults !== 1 ? 's' : ''}
+                  {guest.max_children > 0 && (
+                    <span> · {guest.max_children} Niño{guest.max_children !== 1 ? 's' : ''}</span>
+                  )}
+                </p>
+              </div>
             </div>
 
             <button className="btn-primary" style={{ width: '100%', marginBottom: '12px' }} onClick={() => setStep('form')}>
@@ -230,22 +195,20 @@ export default function InvitacionPage() {
           <div>
             <div style={{ textAlign: 'center', marginBottom: '36px' }}>
               <p style={{ fontFamily: 'var(--font-script)', fontSize: '40px', color: 'var(--olive)' }}>{guest.name}</p>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '15px', color: 'var(--muted)' }}>
-                Confirma tu respuesta
-              </p>
+              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '15px', color: 'var(--muted)' }}>Confirma tu respuesta</p>
             </div>
 
             <form onSubmit={handleSubmit}>
               {/* Attendance */}
               <div style={{ marginBottom: '28px' }}>
-                <label className="invite-label">¿Asistirás?</label>
+                <label className="invite-label">¿Asistirán?</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {[
-                    { val: true,  label: 'Sí, asistiré',     icon: <CelebrationIcon size={24} /> },
-                    { val: false, label: 'No podré asistir',  icon: <HeartEnvelopeIcon size={24} /> },
+                    { val: true,  label: 'Sí, asistiremos',  icon: <CelebrationIcon size={24} /> },
+                    { val: false, label: 'No podremos asistir', icon: <HeartEnvelopeIcon size={24} /> },
                   ].map((opt) => (
                     <button key={String(opt.val)} type="button"
-                      onClick={() => { setAttending(opt.val); if (!opt.val) setCompanionsCount(0) }}
+                      onClick={() => { setAttending(opt.val); if (!opt.val) { setAdultsCount(1); setChildrenCount(0) } }}
                       className={`attend-btn${attending === opt.val ? ' is-selected' : ''}`}>
                       <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{opt.icon}</span>
                       {opt.label}
@@ -254,54 +217,88 @@ export default function InvitacionPage() {
                 </div>
               </div>
 
-              {/* Companions */}
-              {attending === true && guest.max_companions > 0 && (
-                <div style={{ marginBottom: '28px' }}>
-                  <label className="invite-label">
-                    ¿Cuántos acompañantes traerás?{' '}
-                    <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--muted)' }}>
-                      (máx. {guest.max_companions})
-                    </span>
-                  </label>
+              {attending === true && (
+                <div style={{ background: 'var(--warm)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '20px', marginBottom: '28px' }}>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '20px' }}>
+                    ¿Cuántos asistirán?
+                  </p>
 
-                  {/* Count selector */}
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                    {Array.from({ length: guest.max_companions + 1 }, (_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setCompanionsCount(i)}
-                        className={`attend-btn${companionsCount === i ? ' is-selected' : ''}`}
-                        style={{ flex: '0 0 auto', minWidth: '80px', padding: '12px 14px' }}
-                      >
-                        {companionLabel(i)}
+                  {/* Adults row */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: guest.max_children > 0 ? '20px' : '0' }}>
+                    <div>
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text)', fontWeight: 400 }}>Adultos</p>
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--muted)' }}>máx. {guest.max_adults}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <button type="button"
+                        onClick={() => setAdultsCount(Math.max(1, adultsCount - 1))}
+                        style={{ width: '32px', height: '32px', border: '1.5px solid var(--sand)', background: 'var(--cream)', borderRadius: '3px', cursor: 'pointer', fontSize: '18px', color: 'var(--olive)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        −
                       </button>
-                    ))}
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 300, color: 'var(--olive)', minWidth: '32px', textAlign: 'center' }}>
+                        {adultsCount}
+                      </span>
+                      <button type="button"
+                        onClick={() => setAdultsCount(Math.min(guest.max_adults, adultsCount + 1))}
+                        style={{ width: '32px', height: '32px', border: '1.5px solid var(--sand)', background: 'var(--cream)', borderRadius: '3px', cursor: 'pointer', fontSize: '18px', color: 'var(--olive)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        +
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Name inputs */}
-                  {companionsCount > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {Array.from({ length: companionsCount }, (_, i) => (
-                        <div key={i}>
-                          <label className="invite-label">
-                            {companionsCount === 1 ? 'Nombre del acompañante' : `Acompañante ${i + 1}`}
-                          </label>
-                          <input
-                            type="text"
-                            value={companionNames[i] ?? ''}
-                            onChange={(e) => {
-                              const names = [...companionNames]
-                              names[i] = e.target.value
-                              setCompanionNames(names)
-                            }}
-                            placeholder="Nombre completo"
-                            className="invite-field"
-                          />
-                        </div>
-                      ))}
+                  {/* Children row */}
+                  {guest.max_children > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text)', fontWeight: 400 }}>Niños</p>
+                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--muted)' }}>máx. {guest.max_children}</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button type="button"
+                          onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}
+                          style={{ width: '32px', height: '32px', border: '1.5px solid var(--sand)', background: 'var(--cream)', borderRadius: '3px', cursor: 'pointer', fontSize: '18px', color: 'var(--olive)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          −
+                        </button>
+                        <span style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 300, color: 'var(--olive)', minWidth: '32px', textAlign: 'center' }}>
+                          {childrenCount}
+                        </span>
+                        <button type="button"
+                          onClick={() => setChildrenCount(Math.min(guest.max_children, childrenCount + 1))}
+                          style={{ width: '32px', height: '32px', border: '1.5px solid var(--sand)', background: 'var(--cream)', borderRadius: '3px', cursor: 'pointer', fontSize: '18px', color: 'var(--olive)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          +
+                        </button>
+                      </div>
                     </div>
                   )}
+
+                  {/* Running total */}
+                  {(adultsCount + childrenCount) > 1 && (
+                    <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '14px', color: 'var(--muted)', textAlign: 'center', marginTop: '16px', borderTop: '1px solid var(--sand)', paddingTop: '12px' }}>
+                      {adultsCount} adulto{adultsCount !== 1 ? 's' : ''}
+                      {childrenCount > 0 && ` · ${childrenCount} niño${childrenCount !== 1 ? 's' : ''}`}
+                      {' — '}{adultsCount + childrenCount} personas en total
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Companion names (extra adults only) */}
+              {attending === true && extraAdults > 0 && (
+                <div style={{ marginBottom: '28px' }}>
+                  <label className="invite-label">Nombre{extraAdults > 1 ? 's' : ''} del acompañante{extraAdults > 1 ? 's' : ''} adulto{extraAdults > 1 ? 's' : ''}</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {Array.from({ length: extraAdults }, (_, i) => (
+                      <input key={i} type="text"
+                        value={companionNames[i] ?? ''}
+                        onChange={(e) => {
+                          const names = [...companionNames]
+                          names[i] = e.target.value
+                          setCompanionNames(names)
+                        }}
+                        placeholder={extraAdults === 1 ? 'Nombre completo' : `Adulto ${i + 2} — nombre completo`}
+                        className="invite-field" />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -338,23 +335,21 @@ export default function InvitacionPage() {
             <div className="invite-card" style={{ marginBottom: '32px' }}>
               <div className="invite-card-bar" />
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', color: 'var(--olive)', opacity: 0.75 }}>
-                {attending
-                  ? <AttendingIcon size={44} strokeWidth={1.2} />
-                  : <HeartEnvelopeIcon size={44} strokeWidth={1.2} />
-                }
+                {attending ? <AttendingIcon size={44} strokeWidth={1.2} /> : <HeartEnvelopeIcon size={44} strokeWidth={1.2} />}
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '28px', color: 'var(--olive)', marginBottom: '16px' }}>
-                {attending ? '¡Gracias! Te esperamos' : 'Gracias por avisarnos'}
+                {attending ? '¡Gracias! Los esperamos' : 'Gracias por avisarnos'}
               </h2>
               <div style={{ width: '48px', height: '1px', background: 'var(--rose)', margin: '0 auto 20px' }} />
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--muted)', lineHeight: 1.65 }}>
                 {attending
-                  ? `¡Estamos muy felices de que puedas acompañarnos, ${guest.name}! Pronto recibirás más detalles.`
-                  : `Lamentamos que no puedas estar, ${guest.name}. Te llevaremos en nuestros corazones ese día.`}
+                  ? `¡Estamos muy felices de que puedan acompañarnos, ${guest.name}! Pronto recibirán más detalles.`
+                  : `Lamentamos que no puedan estar, ${guest.name}. Los llevaremos en nuestros corazones ese día.`}
               </p>
-              {attending && companionsCount > 0 && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginTop: '12px', fontStyle: 'italic' }}>
-                  Vendrás con {companionLabel(companionsCount).toLowerCase()}.
+              {attending && (adultsCount + childrenCount) > 0 && (
+                <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '16px', color: 'var(--olive)', marginTop: '16px', opacity: 0.8 }}>
+                  {adultsCount} Adulto{adultsCount !== 1 ? 's' : ''}
+                  {childrenCount > 0 && <span> · {childrenCount} Niño{childrenCount !== 1 ? 's' : ''}</span>}
                 </p>
               )}
             </div>
