@@ -251,7 +251,14 @@ export default function InvitadosPage() {
             Invitados
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginTop: '4px' }}>
-            {guests.length} invitados · {guests.filter((g) => g.rsvp_attending === true).length} confirmados
+            {guests.length} invitados
+          {' · '}
+          {guests.reduce((sum, g) => sum + 1 + g.max_companions, 0)} personas (capacidad)
+          {' · '}
+          {guests.filter((g) => g.rsvp_attending === true).reduce((sum, g) => {
+            const confirmed = g.rsvp_plus_one_name ? g.rsvp_plus_one_name.split(',').length : g.rsvp_plus_one ? 1 : 0
+            return sum + 1 + confirmed
+          }, 0)} personas confirmadas
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -300,7 +307,7 @@ export default function InvitadosPage() {
       ) : (
         <div style={{ background: 'var(--warm)', border: '1px solid var(--sand)', borderRadius: '4px', overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto auto', padding: '10px 16px', borderBottom: '1px solid var(--sand)', background: 'var(--cream)' }}>
-            {['Nombre', 'Código', 'Acomp.', 'RSVP', 'Msg', 'Acciones'].map((h) => (
+            {['Nombre', 'Código', 'Personas', 'RSVP', 'Msg', 'Acciones'].map((h) => (
               <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>{h}</span>
             ))}
           </div>
@@ -321,9 +328,14 @@ export default function InvitadosPage() {
                   {g.code}
                 </code>
 
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', textAlign: 'center', color: g.max_companions > 0 ? 'var(--olive)' : 'var(--muted)', fontWeight: g.max_companions > 0 ? 700 : 400 }}>
-                  {g.max_companions > 0 ? `+${g.max_companions}` : '–'}
-                </span>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 400, color: 'var(--olive)' }}>
+                    {1 + g.max_companions}
+                  </span>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.1em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: '1px' }}>
+                    {g.max_companions > 0 ? `1+${g.max_companions}` : 'solo'}
+                  </p>
+                </div>
 
                 <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: badge.bg, color: badge.color, padding: '4px 8px', borderRadius: '3px', whiteSpace: 'nowrap' }}>
                   {badge.label}
@@ -502,7 +514,7 @@ export default function InvitadosPage() {
                 </div>
                 <div style={{ border: '1px solid var(--sand)', borderRadius: '4px', overflow: 'hidden', marginBottom: '20px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 70px', padding: '8px 14px', background: 'var(--cream)', borderBottom: '1px solid var(--sand)' }}>
-                    {['Nombre', 'Código', 'Email', 'Acomp.'].map((h) => (
+                    {['Nombre', 'Código', 'Email', 'Pers.'].map((h) => (
                       <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>{h}</span>
                     ))}
                   </div>
@@ -512,9 +524,10 @@ export default function InvitadosPage() {
                         <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)' }}>{r.name}</span>
                         <code style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', background: 'var(--cream)', padding: '2px 6px', borderRadius: '3px', border: '1px solid var(--sand)' }}>{r.code}</code>
                         <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.email || '–'}</span>
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: r.max_companions > 0 ? 'var(--olive)' : 'var(--muted)', fontWeight: r.max_companions > 0 ? 700 : 400, textAlign: 'center' }}>
-                          {r.max_companions > 0 ? `+${r.max_companions}` : '–'}
-                        </span>
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--olive)' }}>{1 + r.max_companions}</span>
+                          {r.max_companions > 0 && <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>1+{r.max_companions}</p>}
+                        </div>
                       </div>
                     ))}
                   </div>
