@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { CelebrationIcon, HeartEnvelopeIcon, AttendingIcon } from '../components/Icons'
+import { CelebrationIcon, HeartEnvelopeIcon, HeelIcon } from '../components/Icons'
 
 type Guest = {
   id: string
@@ -403,7 +403,7 @@ function InvitacionContent() {
             <div className="invite-card" style={{ marginBottom: '32px' }}>
               <div className="invite-card-bar" />
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', color: 'var(--olive)', opacity: 0.75 }}>
-                {attending ? <AttendingIcon size={44} strokeWidth={1.2} /> : <HeartEnvelopeIcon size={44} strokeWidth={1.2} />}
+                {attending ? <HeelIcon size={44} strokeWidth={1.2} /> : <HeartEnvelopeIcon size={44} strokeWidth={1.2} />}
               </div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '28px', color: 'var(--olive)', marginBottom: '16px' }}>
                 {attending ? '¡Gracias! Los esperamos' : 'Gracias por avisarnos'}

@@ -30,6 +30,40 @@ export {
   ChevronRight,
 } from 'lucide-react'
 
+// Custom: high heel shoe (lucide has no heel icon)
+export function HeelIcon({
+  size = 24,
+  color = 'currentColor',
+  strokeWidth = 1.5,
+  style,
+  className,
+}: {
+  size?: number
+  color?: string
+  strokeWidth?: number
+  style?: React.CSSProperties
+  className?: string
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={style}
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M3 17c0-2.5 2-4 5-5l5.5-1.8c1.5-.5 2.5-1.8 2.5-3.2 0-1.1.9-2 2-2s2 .9 2 2c0 3-1.5 5.5-4 7" />
+      <path d="M3 17v2h18l-2-8" />
+    </svg>
+  )
+}
+
 // Custom: wedding rings divider (lucide has no rings icon)
 export function RingsIcon({
   size = 40,
