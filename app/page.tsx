@@ -101,14 +101,15 @@ function CardIntro({ onDone }: { onDone: () => void }) {
         </p>
       </div>
 
-      {showHint && (
-        <p
-          className="env-hint"
-          style={{ animation: 'fade-in 0.5s ease-out both, pulse-soft 2s 0.5s ease-in-out infinite' }}
-        >
-          Toca para continuar
-        </p>
-      )}
+      <p
+        className="env-hint"
+        style={{
+          opacity: showHint ? undefined : 0,
+          animation: showHint ? 'fade-in 0.5s ease-out both, pulse-soft 2s 0.5s ease-in-out infinite' : 'none',
+        }}
+      >
+        Toca para continuar
+      </p>
     </div>
   )
 }
