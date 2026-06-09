@@ -1,4 +1,4 @@
-import { CalendarIcon, ClockIcon, PinIcon, CarIcon, ParkingIcon, HangerIcon, LeafIcon, PhoneOffIcon, WineIcon, GiftIcon, NoChildIcon } from '../components/Icons'
+import { CalendarIcon, ClockIcon, PinIcon, CarIcon, ParkingIcon, HangerIcon, LeafIcon, PhoneOffIcon, WineIcon, GiftIcon } from '../components/Icons'
 import Link from 'next/link'
 
 export default function LugarPage() {
@@ -157,17 +157,18 @@ export default function LugarPage() {
             Vestimenta
           </p>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 300, fontStyle: 'italic', color: 'var(--olive)', marginBottom: '24px' }}>
-            Elegante formal
+            Semi formal · Chic garden
           </h2>
           <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '17px', color: 'var(--text)', opacity: 0.8, lineHeight: 1.75, marginBottom: '20px' }}>
-            Queremos que este día sea especial para todos. Te pedimos asistir
-            con vestimenta elegante que acompañe la atmósfera del evento.
+            Queremos que te sientas cómodo y elegante. Te pedimos un look
+            semi formal con toques de jardín: colores suaves, naturales o
+            pasteles. Evita colores muy oscuros o demasiado casuales.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', maxWidth: 400, margin: '0 auto' }}>
             {[
-              { label: 'Mujeres', suggestion: 'Vestido largo o traje de noche' },
-              { label: 'Hombres', suggestion: 'Traje oscuro o smoking' },
+              { label: 'Mujeres', suggestion: 'Vestido midi o largo, colores suaves o florales' },
+              { label: 'Hombres', suggestion: 'Traje claro, guayabera o camisa formal' },
             ].map((item) => (
               <div
                 key={item.label}
@@ -223,11 +224,6 @@ export default function LugarPage() {
                 icon: <WineIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
                 title: 'Alcohol responsable',
                 body: 'Habrá vino y algo de alcohol disponible, pero queremos una celebración consciente. Apreciamos que cada persona tome sus propias decisiones al respecto.',
-              },
-              {
-                icon: <NoChildIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
-                title: 'Evento para adultos',
-                body: 'Para mantener la atmósfera que buscamos, es un evento solo para adultos. Te pedimos considerar esto al planificar tu asistencia.',
               },
               {
                 icon: <GiftIcon size={22} color="var(--rose)" strokeWidth={1.4} />,

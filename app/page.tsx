@@ -56,25 +56,18 @@ function RingsIcon() {
   )
 }
 
-/* ─── Envelope Opening ──────────────────────────────── */
-function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
-  const [opened, setOpened] = useState(false)
-  const [hint, setHint] = useState<'seal' | 'card' | null>('seal')
+/* ─── Card Intro ────────────────────────────────────── */
+function CardIntro({ onDone }: { onDone: () => void }) {
   const [exiting, setExiting] = useState(false)
+  const [showHint, setShowHint] = useState(false)
 
-  /* Seal click → open flap + card, then wait for user to tap card */
-  const handleSeal = () => {
-    if (opened) return
-    setOpened(true)
-    setHint(null)
-    /* After 7s without tapping card, show tap hint */
-    setTimeout(() => setHint('card'), 7000)
-  }
+  useEffect(() => {
+    const t = setTimeout(() => setShowHint(true), 2500)
+    return () => clearTimeout(t)
+  }, [])
 
-  /* Card click → transition to main page */
-  const handleCard = () => {
-    if (!opened || exiting) return
-    setHint(null)
+  const handleClick = () => {
+    if (exiting) return
     setExiting(true)
     setTimeout(onDone, 700)
   }
@@ -82,37 +75,23 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
   return (
     <div
       className={`envelope-overlay${exiting ? ' is-exiting' : ''}`}
-      role="dialog"
-      aria-label="Abrir invitación"
+      onClick={handleClick}
+      role="button"
+      aria-label="Continuar a la invitación"
+      style={{ cursor: 'pointer' }}
     >
       <FloatingPetals />
 
-      {/* Envelope — isolated 3D context, no card inside */}
-      <div className={`envelope-wrap${opened ? ' env-open' : ''}`}>
-        <div className="env-body">
-          <div className="env-fold-l" />
-          <div className="env-fold-r" />
-          <div className="env-fold-b" />
-        </div>
-        <div className="env-flap" />
-        <button className="env-seal" onClick={handleSeal} aria-label="Abrir carta">P</button>
-      </div>
-
-      {/* Card — fixed to viewport, rises from below to center */}
-      <div
-        className={`env-card${opened ? ' env-card-open' : ''}`}
-        onClick={handleCard}
-        style={{ cursor: opened ? 'pointer' : 'default' }}
-      >
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '14px' }}>
+      <div className="intro-card">
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px' }}>
           Boda Pandaneiros
         </p>
         <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '15px', color: 'var(--muted)', lineHeight: 1.5, marginBottom: '8px' }}>
           Es con inmenso placer que
         </p>
-        <h2 style={{ fontFamily: 'var(--font-script)', fontSize: '38px', color: 'var(--olive)', lineHeight: 1.1, margin: '0 0 10px' }}>
+        <h1 style={{ fontFamily: 'var(--font-script)', fontSize: '42px', color: 'var(--olive)', lineHeight: 1.1, margin: '0 0 10px' }}>
           Angel &amp; Milagros
-        </h2>
+        </h1>
         <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '16px' }}>
           te invitan a celebrar su matrimonio
         </p>
@@ -122,15 +101,12 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
         </p>
       </div>
 
-      {hint === 'seal' && (
-        <p className="env-hint">Toca el sello para abrir tu invitación</p>
-      )}
-      {hint === 'card' && (
+      {showHint && (
         <p
           className="env-hint"
           style={{ animation: 'fade-in 0.5s ease-out both, pulse-soft 2s 0.5s ease-in-out infinite' }}
         >
-          Toca la carta para continuar
+          Toca para continuar
         </p>
       )}
     </div>
@@ -154,7 +130,7 @@ export default function WeddingPage() {
 
   return (
     <>
-      {!envelopeDone && <EnvelopeOverlay onDone={() => setEnvelopeDone(true)} />}
+      {!envelopeDone && <CardIntro onDone={() => setEnvelopeDone(true)} />}
 
       <main
         style={{
@@ -662,7 +638,7 @@ export default function WeddingPage() {
                 }}
               >
                 {[
-                  { icon: <HangerIcon size={24} color='var(--olive)' strokeWidth={1.4} />, text: 'Vestimenta elegante' },
+                  { icon: <HangerIcon size={24} color='var(--olive)' strokeWidth={1.4} />, text: 'Semi formal · Chic garden' },
                   { icon: <LeafIcon size={24} color='var(--olive)' strokeWidth={1.4} />, text: 'Celebración íntima' },
                   { icon: <PhoneOffIcon size={24} color='var(--olive)' strokeWidth={1.4} />, text: 'Momento presente' },
                 ].map((item) => (
