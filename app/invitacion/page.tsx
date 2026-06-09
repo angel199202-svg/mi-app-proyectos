@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -20,7 +20,7 @@ type Guest = {
 
 type Step = 'code' | 'invitation' | 'form' | 'done'
 
-export default function InvitacionPage() {
+function InvitacionContent() {
   const searchParams = useSearchParams()
   const [step, setStep] = useState<Step>('code')
   const [code, setCode] = useState('')
@@ -374,5 +374,13 @@ export default function InvitacionPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function InvitacionPage() {
+  return (
+    <Suspense>
+      <InvitacionContent />
+    </Suspense>
   )
 }
