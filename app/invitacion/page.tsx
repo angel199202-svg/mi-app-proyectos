@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { CelebrationIcon, HeartEnvelopeIcon } from '../components/Icons'
+import { CelebrationIcon, HeartEnvelopeIcon, AttendingIcon } from '../components/Icons'
 
 type Guest = {
   id: string
@@ -56,7 +56,6 @@ export default function InvitacionPage() {
     setGuest(data)
 
     if (data.rsvp_attending !== null) {
-      /* already responded */
       setAttending(data.rsvp_attending)
       setPlusOne(data.rsvp_plus_one ?? false)
       setPlusOneName(data.rsvp_plus_one_name ?? '')
@@ -95,33 +94,10 @@ export default function InvitacionPage() {
     setStep('done')
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '14px 16px',
-    fontFamily: 'var(--font-body)',
-    fontSize: '15px',
-    background: 'var(--warm)',
-    border: '1.5px solid var(--sand)',
-    borderRadius: '3px',
-    color: 'var(--text)',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-body)',
-    fontSize: '10px',
-    letterSpacing: '0.14em',
-    textTransform: 'uppercase' as const,
-    color: 'var(--muted)',
-    display: 'block',
-    marginBottom: '8px',
-  }
-
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background: 'var(--cream)',
         display: 'flex',
         alignItems: 'center',
@@ -141,11 +117,12 @@ export default function InvitacionPage() {
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color: 'var(--olive)',
-          opacity: 0.65,
+          opacity: 0.6,
           textDecoration: 'none',
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
+          transition: 'opacity 0.2s',
         }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -159,31 +136,45 @@ export default function InvitacionPage() {
         {/* STEP: code entry */}
         {step === 'code' && (
           <div style={{ textAlign: 'center' }}>
+            {/* Decorative rose ornament */}
+            <div
+              aria-hidden="true"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                marginBottom: '20px',
+                opacity: 0.6,
+              }}
+            >
+              <div style={{ width: '48px', height: '1px', background: 'var(--rose)' }} />
+              <div style={{ width: '5px', height: '5px', background: 'var(--rose)', borderRadius: '50%' }} />
+              <div style={{ width: '48px', height: '1px', background: 'var(--rose)' }} />
+            </div>
+
             <p style={{ fontFamily: 'var(--font-script)', fontSize: '48px', color: 'var(--olive)', marginBottom: '8px' }}>
               Tu invitación
             </p>
-            <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '16px', color: 'var(--muted)', marginBottom: '48px' }}>
+            <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '16px', color: 'var(--muted)', marginBottom: '44px' }}>
               Ingresa el código que encontrarás en tu tarjeta
             </p>
 
             <form onSubmit={handleLookup}>
               <div style={{ marginBottom: '16px', textAlign: 'left' }}>
-                <label style={labelStyle}>Código de invitación</label>
+                <label className="invite-label">Código de invitación</label>
                 <input
                   type="text"
                   value={code}
                   onChange={(e) => { setCode(e.target.value); setError('') }}
                   placeholder="Ej: ANGEL-001"
-                  style={{ ...inputStyle, textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', fontSize: '18px' }}
+                  className="invite-field"
+                  style={{ textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', fontSize: '18px' }}
                   autoFocus
                   autoCapitalize="characters"
                 />
               </div>
-              {error && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#8B2020', marginBottom: '16px', lineHeight: 1.5 }}>
-                  {error}
-                </p>
-              )}
+              {error && <p className="invite-error">{error}</p>}
               <button
                 type="submit"
                 className="btn-primary"
@@ -199,37 +190,76 @@ export default function InvitacionPage() {
         {/* STEP: show invitation */}
         {step === 'invitation' && guest && (
           <div style={{ textAlign: 'center' }}>
-            {/* Invitation card */}
-            <div
-              style={{
-                background: 'var(--warm)',
-                border: '1px solid var(--sand)',
-                borderRadius: '4px',
-                padding: '48px 36px',
-                marginBottom: '32px',
-                position: 'relative',
-                boxShadow: '0 12px 40px rgba(106,107,75,0.12)',
-              }}
-            >
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--rose)', opacity: 0.7 }} />
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
-                Boda Pandaneiros · Invitación personal
+            <div className="invite-card" style={{ marginBottom: '32px' }}>
+              <div className="invite-card-bar" />
+
+              <p style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '10px',
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: '28px',
+              }}>
+                Boda Pandaneiros &nbsp;·&nbsp; Invitación personal
               </p>
-              <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '17px', color: 'var(--muted)', marginBottom: '8px' }}>
+
+              <p style={{
+                fontFamily: 'var(--font-display)',
+                fontStyle: 'italic',
+                fontSize: '17px',
+                color: 'var(--muted)',
+                marginBottom: '8px',
+              }}>
                 Con mucho amor, invitamos a
               </p>
-              <h1 style={{ fontFamily: 'var(--font-script)', fontSize: '40px', color: 'var(--olive)', marginBottom: '16px', lineHeight: 1.2 }}>
+
+              <h1 style={{
+                fontFamily: 'var(--font-script)',
+                fontSize: '44px',
+                color: 'var(--olive)',
+                marginBottom: '20px',
+                lineHeight: 1.2,
+              }}>
                 {guest.name}
               </h1>
-              <div style={{ width: '40px', height: '1px', background: 'var(--rose)', margin: '0 auto 16px', opacity: 0.7 }} />
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: '17px', color: 'var(--text)', opacity: 0.8, marginBottom: '4px' }}>
+
+              <div style={{
+                width: '48px',
+                height: '1px',
+                background: 'var(--rose)',
+                margin: '0 auto 20px',
+              }} />
+
+              <p style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '17px',
+                color: 'var(--text)',
+                opacity: 0.8,
+                marginBottom: '4px',
+              }}>
                 a celebrar nuestra boda
               </p>
-              <p style={{ fontFamily: 'var(--font-script)', fontSize: '32px', color: 'var(--olive)' }}>
+
+              <p style={{
+                fontFamily: 'var(--font-script)',
+                fontSize: '32px',
+                color: 'var(--olive)',
+              }}>
                 Angel &amp; Milagros
               </p>
+
               {guest.allow_plus_one && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', marginTop: '20px', padding: '10px 16px', background: 'var(--cream)', borderRadius: '3px' }}>
+                <p style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '12px',
+                  color: 'var(--muted)',
+                  marginTop: '24px',
+                  padding: '10px 18px',
+                  background: 'var(--cream)',
+                  borderRadius: '3px',
+                  letterSpacing: '0.02em',
+                }}>
                   Esta invitación incluye un acompañante
                 </p>
               )}
@@ -265,29 +295,21 @@ export default function InvitacionPage() {
             <form onSubmit={handleSubmit}>
               {/* Attendance */}
               <div style={{ marginBottom: '28px' }}>
-                <label style={labelStyle}>¿Asistirás?</label>
+                <label className="invite-label">¿Asistirás?</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {[
-                    { val: true,  label: 'Sí, asistiré',   icon: <CelebrationIcon size={28} color='var(--olive)' /> },
-                    { val: false, label: 'No podré asistir', icon: <HeartEnvelopeIcon size={28} color='var(--olive)' /> },
+                    { val: true,  label: 'Sí, asistiré',    icon: <CelebrationIcon size={24} /> },
+                    { val: false, label: 'No podré asistir', icon: <HeartEnvelopeIcon size={24} /> },
                   ].map(opt => (
                     <button
                       key={String(opt.val)}
                       type="button"
                       onClick={() => { setAttending(opt.val); if (!opt.val) setPlusOne(false) }}
-                      style={{
-                        padding: '18px 12px',
-                        borderRadius: '3px',
-                        border: attending === opt.val ? '2px solid var(--olive)' : '1.5px solid var(--sand)',
-                        background: attending === opt.val ? 'var(--olive)' : 'var(--warm)',
-                        color: attending === opt.val ? 'var(--cream)' : 'var(--text)',
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        transition: 'all 0.18s',
-                      }}
+                      className={`attend-btn${attending === opt.val ? ' is-selected' : ''}`}
                     >
-                      <div style={{ fontSize: '22px', marginBottom: '6px' }}>{opt.icon}</div>
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {opt.icon}
+                      </span>
                       {opt.label}
                     </button>
                   ))}
@@ -297,7 +319,7 @@ export default function InvitacionPage() {
               {/* Plus one */}
               {attending === true && guest.allow_plus_one && (
                 <div style={{ marginBottom: '28px' }}>
-                  <label style={labelStyle}>¿Traerás acompañante?</label>
+                  <label className="invite-label">¿Traerás acompañante?</label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                     {[
                       { val: true,  label: 'Sí, vendré acompañado/a' },
@@ -307,17 +329,7 @@ export default function InvitacionPage() {
                         key={String(opt.val)}
                         type="button"
                         onClick={() => setPlusOne(opt.val)}
-                        style={{
-                          padding: '14px 12px',
-                          borderRadius: '3px',
-                          border: plusOne === opt.val ? '2px solid var(--olive)' : '1.5px solid var(--sand)',
-                          background: plusOne === opt.val ? 'var(--olive)' : 'var(--warm)',
-                          color: plusOne === opt.val ? 'var(--cream)' : 'var(--text)',
-                          fontFamily: 'var(--font-body)',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          transition: 'all 0.18s',
-                        }}
+                        className={`attend-btn${plusOne === opt.val ? ' is-selected' : ''}`}
                       >
                         {opt.label}
                       </button>
@@ -325,13 +337,13 @@ export default function InvitacionPage() {
                   </div>
                   {plusOne && (
                     <div>
-                      <label style={labelStyle}>Nombre del acompañante</label>
+                      <label className="invite-label">Nombre del acompañante</label>
                       <input
                         type="text"
                         value={plusOneName}
                         onChange={(e) => setPlusOneName(e.target.value)}
                         placeholder="Nombre completo"
-                        style={inputStyle}
+                        className="invite-field"
                       />
                     </div>
                   )}
@@ -341,34 +353,31 @@ export default function InvitacionPage() {
               {/* Dietary */}
               {attending === true && (
                 <div style={{ marginBottom: '28px' }}>
-                  <label style={labelStyle}>Restricciones alimentarias (opcional)</label>
+                  <label className="invite-label">Restricciones alimentarias (opcional)</label>
                   <input
                     type="text"
                     value={dietary}
                     onChange={(e) => setDietary(e.target.value)}
                     placeholder="Ej: vegetariano, alérgico a los mariscos"
-                    style={inputStyle}
+                    className="invite-field"
                   />
                 </div>
               )}
 
               {/* Message */}
               <div style={{ marginBottom: '32px' }}>
-                <label style={labelStyle}>Mensaje para los novios (opcional)</label>
+                <label className="invite-label">Mensaje para los novios (opcional)</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Déjanos un mensaje..."
                   rows={3}
-                  style={{ ...inputStyle, resize: 'vertical' }}
+                  className="invite-field"
+                  style={{ resize: 'vertical' }}
                 />
               </div>
 
-              {error && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#8B2020', marginBottom: '16px' }}>
-                  {error}
-                </p>
-              )}
+              {error && <p className="invite-error">{error}</p>}
 
               <button
                 type="submit"
@@ -385,29 +394,51 @@ export default function InvitacionPage() {
         {/* STEP: done */}
         {step === 'done' && guest && (
           <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                background: 'var(--warm)',
-                border: '1px solid var(--sand)',
-                borderRadius: '4px',
-                padding: '48px 36px',
-                marginBottom: '32px',
-                boxShadow: '0 12px 40px rgba(106,107,75,0.12)',
-              }}
-            >
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>
-                {attending ? '🎉' : '💌'}
+            <div className="invite-card" style={{ marginBottom: '32px' }}>
+              <div className="invite-card-bar" />
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '20px',
+                color: 'var(--olive)',
+                opacity: 0.75,
+              }}>
+                {attending
+                  ? <AttendingIcon size={44} strokeWidth={1.2} />
+                  : <HeartEnvelopeIcon size={44} strokeWidth={1.2} />
+                }
               </div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '28px', color: 'var(--olive)', marginBottom: '16px' }}>
+
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
+                fontStyle: 'italic',
+                fontSize: '28px',
+                color: 'var(--olive)',
+                marginBottom: '16px',
+              }}>
                 {attending ? '¡Gracias! Te esperamos' : 'Gracias por avisarnos'}
               </h2>
-              <div style={{ width: '40px', height: '1px', background: 'var(--rose)', margin: '0 auto 20px', opacity: 0.7 }} />
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--muted)', lineHeight: 1.65 }}>
+
+              <div style={{
+                width: '48px',
+                height: '1px',
+                background: 'var(--rose)',
+                margin: '0 auto 20px',
+              }} />
+
+              <p style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '15px',
+                color: 'var(--muted)',
+                lineHeight: 1.65,
+              }}>
                 {attending
                   ? `¡Estamos muy felices de que puedas acompañarnos, ${guest.name}! Pronto recibirás más detalles.`
                   : `Lamentamos que no puedas estar, ${guest.name}. Te llevaremos en nuestros corazones ese día.`}
               </p>
             </div>
+
             <Link href="/" className="btn-outline">
               Volver al inicio
             </Link>

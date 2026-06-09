@@ -2,11 +2,11 @@
 
 /* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
-  --cream: #e5e3e6;
+  --cream: #ede9e2;
   --sand:  #c4bfac;
   --olive: #6a6b4b;
-  --rose:  #d1beb0;
-  --warm:  #faf9f7;
+  --rose:  #c49580;
+  --warm:  #faf8f5;
   --text:  #3a3a28;
   --muted: #7c7c60;
 }
@@ -443,6 +443,95 @@ input, select, textarea { font-size: 16px; }
 @keyframes scroll-bounce {
   0%, 100% { transform: translateY(0); opacity: 0.5; }
   50%       { transform: translateY(6px); opacity: 1; }
+}
+
+/* ─── Invitation Page ────────────────────────────────────────── */
+.invite-field {
+  width: 100%;
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  background: var(--warm);
+  border: 1.5px solid var(--sand);
+  border-radius: 3px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  -webkit-appearance: none;
+}
+.invite-field:focus {
+  border-color: var(--olive);
+  box-shadow: 0 0 0 3px rgba(106,107,75,0.1);
+}
+.invite-field::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.invite-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.invite-card {
+  background: var(--warm);
+  border: 1px solid rgba(196,149,128,0.28);
+  border-radius: 4px;
+  padding: 52px 40px;
+  position: relative;
+  box-shadow:
+    0 2px 8px rgba(106,107,75,0.05),
+    0 20px 60px rgba(106,107,75,0.11);
+}
+
+.invite-card-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, var(--rose) 25%, var(--rose) 75%, transparent 100%);
+  border-radius: 4px 4px 0 0;
+}
+
+.attend-btn {
+  padding: 20px 12px;
+  border-radius: 3px;
+  border: 1.5px solid var(--sand);
+  background: var(--warm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.attend-btn:hover {
+  border-color: rgba(106,107,75,0.4);
+  background: rgba(106,107,75,0.04);
+}
+.attend-btn.is-selected {
+  border: 2px solid var(--olive);
+  background: var(--olive);
+  color: var(--cream);
+}
+
+.invite-error {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #6e1e1e;
+  background: rgba(110,30,30,0.06);
+  border: 1px solid rgba(110,30,30,0.14);
+  border-radius: 3px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  line-height: 1.55;
 }
 
 /* ─── Legacy (for /app/* routes) ────────────────────────────── */
