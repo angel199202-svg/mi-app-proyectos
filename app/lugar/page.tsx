@@ -227,8 +227,8 @@ export default function LugarPage() {
               },
               {
                 icon: <GiftIcon size={22} color="var(--rose)" strokeWidth={1.4} />,
-                title: 'Los regalos no son necesarios',
-                body: 'Su presencia es el mejor regalo. Si desean contribuir de alguna manera, en breve compartiremos una lista de deseos para quienes insistan.',
+                title: 'Sobre los regalos',
+                body: 'Su presencia es lo que más valoramos. Si desean regalarnos algo, el efectivo es siempre bienvenido y nos ayuda muchísimo en esta nueva etapa. ¡De corazón, gracias!',
               },
               {
                 icon: <ClockIcon size={22} color="var(--rose)" strokeWidth={1.4} />,

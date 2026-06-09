@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { LinkIcon, EditIcon, TrashIcon, ChatIcon, CelebrationIcon, HeartEnvelopeIcon, CheckIcon } from '../../components/Icons'
+import { LinkIcon, EditIcon, TrashIcon, ChatIcon, CheckIcon } from '../../components/Icons'
 
 type Guest = {
   id: string
@@ -26,6 +26,13 @@ type FormData = {
   allow_plus_one: boolean
 }
 
+type BulkRow = {
+  name: string
+  email: string
+  allow_plus_one: boolean
+  code: string
+}
+
 const EMPTY_FORM: FormData = { code: '', name: '', email: '', allow_plus_one: false }
 
 function rsvpBadge(guest: Guest) {
@@ -40,18 +47,50 @@ function generateCode(name: string): string {
   return `${prefix}-${num}`
 }
 
+function parseBulkText(text: string): BulkRow[] {
+  const usedCodes = new Set<string>()
+  return text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [rawName = '', rawEmail = '', rawPlus = ''] = line.split(',').map((p) => p.trim())
+      const name = rawName
+      const email = rawEmail
+      const allow_plus_one = ['true', '1', 'si', 'sí', 'yes', 'x'].includes(rawPlus.toLowerCase())
+      let code = generateCode(name)
+      let tries = 0
+      while (usedCodes.has(code) && tries < 20) { code = generateCode(name); tries++ }
+      usedCodes.add(code)
+      return { name, email, allow_plus_one, code }
+    })
+    .filter((r) => r.name)
+}
+
 export default function InvitadosPage() {
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
+
+  // single guest modal
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Guest | null>(null)
   const [form, setForm] = useState<FormData>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // table ui
   const [copied, setCopied] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filterRsvp, setFilterRsvp] = useState<'all' | 'pending' | 'yes' | 'no'>('all')
+
+  // bulk import
+  const [showBulk, setShowBulk] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([])
+  const [bulkStep, setBulkStep] = useState<'input' | 'preview' | 'done'>('input')
+  const [bulkImporting, setBulkImporting] = useState(false)
+  const [bulkResult, setBulkResult] = useState<{ ok: number; failed: number } | null>(null)
 
   async function load() {
     const { data } = await supabase
@@ -122,12 +161,66 @@ export default function InvitadosPage() {
     setTimeout(() => setCopied(null), 2000)
   }
 
+  // ─── Bulk import handlers ───────────────────────
+  function openBulk() {
+    setBulkText('')
+    setBulkRows([])
+    setBulkStep('input')
+    setBulkResult(null)
+    setShowBulk(true)
+  }
+
+  function handleBulkPreview() {
+    const rows = parseBulkText(bulkText)
+    if (!rows.length) return
+    setBulkRows(rows)
+    setBulkStep('preview')
+  }
+
+  async function handleBulkImport() {
+    if (!bulkRows.length) return
+    setBulkImporting(true)
+
+    const payload = bulkRows.map((r) => ({
+      name:           r.name,
+      email:          r.email || null,
+      allow_plus_one: r.allow_plus_one,
+      code:           r.code,
+    }))
+
+    // try batch first
+    const { data, error: batchErr } = await supabase
+      .from('wedding_guests')
+      .insert(payload)
+      .select('id')
+
+    let ok = 0
+    let failed = 0
+
+    if (batchErr) {
+      // batch failed (likely duplicate code) — insert row by row
+      for (const row of payload) {
+        const { error: rowErr } = await supabase.from('wedding_guests').insert(row)
+        if (rowErr) failed++
+        else ok++
+      }
+    } else {
+      ok = data?.length ?? payload.length
+    }
+
+    setBulkImporting(false)
+    setBulkResult({ ok, failed })
+    setBulkStep('done')
+    load()
+  }
+
+  // ─── Filters ────────────────────────────────────
   const filtered = guests.filter((g) => {
     const matchSearch = !search || g.name.toLowerCase().includes(search.toLowerCase()) || g.code.toLowerCase().includes(search.toLowerCase())
     const matchRsvp =
-      filterRsvp === 'all' ? true :
+      filterRsvp === 'all'     ? true :
       filterRsvp === 'pending' ? g.rsvp_attending === null :
-      filterRsvp === 'yes' ? g.rsvp_attending === true :
+      filterRsvp === 'yes'     ? g.rsvp_attending === true :
       g.rsvp_attending === false
     return matchSearch && matchRsvp
   })
@@ -151,7 +244,15 @@ export default function InvitadosPage() {
             {guests.length} invitados · {guests.filter((g) => g.rsvp_attending === true).length} confirmados
           </p>
         </div>
-        <button className="btn-primary" onClick={openNew}>+ Nuevo invitado</button>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button className="btn-outline" onClick={openBulk}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginRight: '6px' }}>
+              <path d="M7 1v8M3 5l4-4 4 4M1 11h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Carga masiva
+          </button>
+          <button className="btn-primary" onClick={openNew}>+ Nuevo invitado</button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -194,7 +295,6 @@ export default function InvitadosPage() {
         </div>
       ) : (
         <div style={{ background: 'var(--warm)', border: '1px solid var(--sand)', borderRadius: '4px', overflow: 'hidden' }}>
-          {/* Table header */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto auto',
             padding: '10px 16px', borderBottom: '1px solid var(--sand)',
@@ -219,7 +319,6 @@ export default function InvitadosPage() {
                   background: 'var(--warm)',
                 }}
               >
-                {/* Name */}
                 <div>
                   <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text)', fontWeight: 400 }}>{g.name}</p>
                   {g.email && <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--muted)' }}>{g.email}</p>}
@@ -230,17 +329,14 @@ export default function InvitadosPage() {
                   )}
                 </div>
 
-                {/* Code */}
                 <code style={{ fontFamily: 'monospace', fontSize: '13px', color: 'var(--olive)', background: 'var(--cream)', padding: '3px 8px', borderRadius: '3px', border: '1px solid var(--sand)' }}>
                   {g.code}
                 </code>
 
-                {/* Plus one allowed */}
                 <span style={{ fontSize: '16px', textAlign: 'center' }}>
                   {g.allow_plus_one ? '✓' : '–'}
                 </span>
 
-                {/* RSVP badge */}
                 <span style={{
                   fontFamily: 'var(--font-body)', fontSize: '10px', fontWeight: 700,
                   letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -250,24 +346,22 @@ export default function InvitadosPage() {
                   {badge.label}
                 </span>
 
-                {/* Message */}
                 <span title={g.rsvp_message ?? ''} style={{ fontSize: '16px', textAlign: 'center', cursor: g.rsvp_message ? 'help' : 'default' }}>
                   {g.rsvp_message ? <ChatIcon size={14} color='var(--olive)' strokeWidth={1.5} /> : <span style={{ color: 'var(--muted)', fontSize: '14px' }}>–</span>}
                 </span>
 
-                {/* Actions */}
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     onClick={() => copyLink(g.code)}
                     title="Copiar link de invitación"
-                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px' }}
+                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer' }}
                   >
                     {copied === g.code ? <CheckIcon size={14} color='var(--olive)' strokeWidth={2.5} /> : <LinkIcon size={14} color='var(--olive)' strokeWidth={1.5} />}
                   </button>
                   <button
                     onClick={() => openEdit(g)}
                     title="Editar"
-                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px' }}
+                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer' }}
                   >
                     <EditIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                   </button>
@@ -275,7 +369,7 @@ export default function InvitadosPage() {
                     onClick={() => handleDelete(g.id)}
                     title="Eliminar"
                     disabled={deleting === g.id}
-                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', fontSize: '13px', opacity: deleting === g.id ? 0.4 : 1 }}
+                    style={{ padding: '6px 8px', background: 'none', border: '1px solid var(--sand)', borderRadius: '3px', cursor: 'pointer', opacity: deleting === g.id ? 0.4 : 1 }}
                   >
                     <TrashIcon size={14} color='var(--olive)' strokeWidth={1.5} />
                   </button>
@@ -286,7 +380,7 @@ export default function InvitadosPage() {
         </div>
       )}
 
-      {/* RSVP details section */}
+      {/* RSVP notes */}
       {guests.some((g) => g.rsvp_dietary || g.rsvp_message) && (
         <div style={{ marginTop: '32px' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '22px', color: 'var(--olive)', marginBottom: '16px' }}>
@@ -304,7 +398,7 @@ export default function InvitadosPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* ─── Single guest modal ─────────────────────── */}
       {showModal && (
         <div
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false) }}
@@ -315,14 +409,12 @@ export default function InvitadosPage() {
             animation: 'fade-in 0.15s ease-out both',
           }}
         >
-          <div
-            style={{
-              background: 'var(--warm)', borderRadius: '4px', padding: '32px',
-              width: '100%', maxWidth: 440,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-              animation: 'fade-up 0.2s ease-out both',
-            }}
-          >
+          <div style={{
+            background: 'var(--warm)', borderRadius: '4px', padding: '32px',
+            width: '100%', maxWidth: 440,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            animation: 'fade-up 0.2s ease-out both',
+          }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '24px' }}>
               {editing ? 'Editar invitado' : 'Nuevo invitado'}
             </h2>
@@ -393,29 +485,199 @@ export default function InvitadosPage() {
                 </span>
               </label>
 
-              {error && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#8B2020' }}>{error}</p>
-              )}
+              {error && <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: '#8B2020' }}>{error}</p>}
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="btn-outline"
-                  style={{ flex: 1 }}
-                >
+                <button type="button" onClick={() => setShowModal(false)} className="btn-outline" style={{ flex: 1 }}>
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  style={{ flex: 1 }}
-                  disabled={saving}
-                >
+                <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={saving}>
                   {saving ? 'Guardando...' : editing ? 'Guardar cambios' : 'Agregar invitado'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Bulk import modal ──────────────────────── */}
+      {showBulk && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget && !bulkImporting) setShowBulk(false) }}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(58,58,40,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px', zIndex: 50,
+            animation: 'fade-in 0.15s ease-out both',
+          }}
+        >
+          <div style={{
+            background: 'var(--warm)', borderRadius: '4px', padding: '32px',
+            width: '100%', maxWidth: bulkStep === 'preview' ? 680 : 520,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            animation: 'fade-up 0.2s ease-out both',
+            maxHeight: '90vh', overflowY: 'auto',
+          }}>
+
+            {/* Step: input */}
+            {bulkStep === 'input' && (
+              <>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '6px' }}>
+                  Carga masiva de invitados
+                </h2>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginBottom: '24px', lineHeight: 1.55 }}>
+                  Pega la lista de invitados, uno por línea. Formato:
+                </p>
+
+                <div style={{ background: 'var(--cream)', border: '1px solid var(--sand)', borderRadius: '3px', padding: '12px 16px', marginBottom: '20px', fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', lineHeight: 1.8 }}>
+                  <div>Nombre Apellido</div>
+                  <div>Nombre Apellido, email@ejemplo.com</div>
+                  <div>Nombre Apellido, , true&nbsp;&nbsp;<span style={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '11px' }}>← con +1</span></div>
+                  <div>Nombre Apellido, email@ejemplo.com, true</div>
+                </div>
+
+                <textarea
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  placeholder={'María González\nCarlos Rodríguez, carlos@email.com\nAna Martínez, ana@email.com, true'}
+                  rows={10}
+                  style={{
+                    ...inputStyle,
+                    resize: 'vertical',
+                    fontFamily: 'monospace',
+                    fontSize: '13px',
+                    lineHeight: 1.7,
+                    marginBottom: '20px',
+                  }}
+                  autoFocus
+                />
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowBulk(false)}
+                    className="btn-outline"
+                    style={{ flex: 1 }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBulkPreview}
+                    className="btn-primary"
+                    style={{ flex: 2 }}
+                    disabled={!parseBulkText(bulkText).length}
+                  >
+                    Vista previa ({parseBulkText(bulkText).length} invitados)
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Step: preview */}
+            {bulkStep === 'preview' && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <div>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '24px', color: 'var(--olive)', marginBottom: '4px' }}>
+                      Vista previa
+                    </h2>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>
+                      {bulkRows.length} invitados listos para importar
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBulkStep('input')}
+                    style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--olive)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.06em', paddingTop: '4px' }}
+                  >
+                    ← Editar
+                  </button>
+                </div>
+
+                {/* Preview table */}
+                <div style={{ border: '1px solid var(--sand)', borderRadius: '4px', overflow: 'hidden', marginBottom: '20px' }}>
+                  {/* Header */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1.2fr 1.5fr 60px',
+                    padding: '8px 14px',
+                    background: 'var(--cream)',
+                    borderBottom: '1px solid var(--sand)',
+                  }}>
+                    {['Nombre', 'Código', 'Email', '+1'].map((h) => (
+                      <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                        {h}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Rows */}
+                  <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
+                    {bulkRows.map((r, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 1.2fr 1.5fr 60px',
+                          padding: '10px 14px',
+                          alignItems: 'center',
+                          borderBottom: i < bulkRows.length - 1 ? '1px solid var(--sand)' : 'none',
+                          background: 'var(--warm)',
+                        }}
+                      >
+                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)' }}>
+                          {r.name}
+                        </span>
+                        <code style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--olive)', background: 'var(--cream)', padding: '2px 6px', borderRadius: '3px', border: '1px solid var(--sand)' }}>
+                          {r.code}
+                        </code>
+                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {r.email || '–'}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: r.allow_plus_one ? 'var(--olive)' : 'var(--muted)', textAlign: 'center' }}>
+                          {r.allow_plus_one ? '✓' : '–'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleBulkImport}
+                  className="btn-primary"
+                  style={{ width: '100%' }}
+                  disabled={bulkImporting}
+                >
+                  {bulkImporting ? 'Importando...' : `Importar ${bulkRows.length} invitados`}
+                </button>
+              </>
+            )}
+
+            {/* Step: done */}
+            {bulkStep === 'done' && bulkResult && (
+              <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                <div style={{ fontSize: '40px', marginBottom: '16px' }}>
+                  {bulkResult.failed === 0 ? '✓' : '⚠'}
+                </div>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '26px', color: 'var(--olive)', marginBottom: '12px' }}>
+                  {bulkResult.failed === 0 ? 'Importación completada' : 'Importación con errores'}
+                </h2>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '28px' }}>
+                  {bulkResult.ok > 0 && <><strong style={{ color: 'var(--olive)' }}>{bulkResult.ok}</strong> invitados importados correctamente.<br /></>}
+                  {bulkResult.failed > 0 && <><strong style={{ color: '#8B2020' }}>{bulkResult.failed}</strong> no pudieron importarse (código duplicado u otro error).</>}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowBulk(false)}
+                  className="btn-primary"
+                  style={{ minWidth: '160px' }}
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
