@@ -87,7 +87,7 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
     >
       <FloatingPetals />
 
-      {/* Envelope */}
+      {/* Envelope — isolated 3D context, no card inside */}
       <div className={`envelope-wrap${opened ? ' env-open' : ''}`}>
         <div className="env-body">
           <div className="env-fold-l" />
@@ -95,36 +95,33 @@ function EnvelopeOverlay({ onDone }: { onDone: () => void }) {
           <div className="env-fold-b" />
         </div>
         <div className="env-flap" />
-
-        {/* Wax seal */}
         <button className="env-seal" onClick={handleSeal} aria-label="Abrir carta">P</button>
-
-        {/* Card — clickable once open */}
-        <div
-          className="env-card"
-          onClick={handleCard}
-          style={{ cursor: opened ? 'pointer' : 'default' }}
-        >
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px' }}>
-            Boda Pandaneiros
-          </p>
-          <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5, marginBottom: '6px' }}>
-            Es con inmenso placer que
-          </p>
-          <h2 style={{ fontFamily: 'var(--font-script)', fontSize: '30px', color: 'var(--olive)', lineHeight: 1.1, margin: '0 0 6px' }}>
-            Angel &amp; Milagros
-          </h2>
-          <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '12px', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '8px' }}>
-            te invitan a celebrar su matrimonio
-          </p>
-          <div style={{ width: '32px', height: '1px', background: 'var(--rose)', margin: '0 auto 8px', opacity: 0.7 }} />
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.7 }}>
-            17 · 07 · 2026 &nbsp;·&nbsp; Valencia
-          </p>
-        </div>
       </div>
 
-      {/* Hint below envelope */}
+      {/* Card — fixed to viewport, rises from below to center */}
+      <div
+        className={`env-card${opened ? ' env-card-open' : ''}`}
+        onClick={handleCard}
+        style={{ cursor: opened ? 'pointer' : 'default' }}
+      >
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '14px' }}>
+          Boda Pandaneiros
+        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '15px', color: 'var(--muted)', lineHeight: 1.5, marginBottom: '8px' }}>
+          Es con inmenso placer que
+        </p>
+        <h2 style={{ fontFamily: 'var(--font-script)', fontSize: '38px', color: 'var(--olive)', lineHeight: 1.1, margin: '0 0 10px' }}>
+          Angel &amp; Milagros
+        </h2>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '14px', color: 'var(--muted)', lineHeight: 1.55, marginBottom: '16px' }}>
+          te invitan a celebrar su matrimonio
+        </p>
+        <div style={{ width: '36px', height: '1px', background: 'var(--rose)', margin: '0 auto 14px' }} />
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--olive)', opacity: 0.75 }}>
+          17 · 07 · 2026 &nbsp;·&nbsp; Valencia
+        </p>
+      </div>
+
       {hint === 'seal' && (
         <p className="env-hint">Toca el sello para abrir tu invitación</p>
       )}
