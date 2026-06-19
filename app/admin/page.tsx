@@ -12,6 +12,9 @@ type Stats = {
   pending: number
   plusOnes: number
   photos: number
+  confirmedAdults: number
+  confirmedChildren: number
+  confirmedTotal: number
 }
 
 function StatCard({ label, value, sub, color = 'var(--olive)' }: {
@@ -40,24 +43,36 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function load() {
       const [{ data: guests }, { count: photoCount }] = await Promise.all([
-        supabase.from('wedding_guests').select('rsvp_attending, rsvp_plus_one'),
+        supabase.from('wedding_guests').select('rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, max_adults, max_children'),
         supabase.from('wedding_photos').select('id', { count: 'exact', head: true }),
       ])
 
       const g = guests ?? []
+      const confirmedGuests = g.filter((x) => x.rsvp_attending === true)
+
+      const confirmedAdults = confirmedGuests.reduce((s, x) => {
+        const extras = x.rsvp_plus_one_name
+          ? x.rsvp_plus_one_name.split(',').filter((n: string) => n.trim()).length
+          : 0
+        return s + 1 + extras
+      }, 0)
+
+      const confirmedChildren = confirmedGuests.reduce((s, x) => s + (x.max_children ?? 0), 0)
+
       setStats({
-        total:     g.length,
-        confirmed: g.filter((x) => x.rsvp_attending === true).length,
-        declined:  g.filter((x) => x.rsvp_attending === false).length,
-        pending:   g.filter((x) => x.rsvp_attending === null).length,
-        plusOnes:  g.filter((x) => x.rsvp_plus_one === true).length,
-        photos:    photoCount ?? 0,
+        total:            g.length,
+        confirmed:        confirmedGuests.length,
+        declined:         g.filter((x) => x.rsvp_attending === false).length,
+        pending:          g.filter((x) => x.rsvp_attending === null).length,
+        plusOnes:         g.filter((x) => x.rsvp_plus_one === true).length,
+        photos:           photoCount ?? 0,
+        confirmedAdults,
+        confirmedChildren,
+        confirmedTotal:   confirmedAdults + confirmedChildren,
       })
     }
     load()
   }, [])
-
-  const totalAttending = (stats?.confirmed ?? 0) + (stats?.plusOnes ?? 0)
 
   return (
     <div>
@@ -74,11 +89,65 @@ export default function AdminDashboard() {
         <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>Cargando...</p>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+          {/* Confirmed attendance scorecards */}
+          <div style={{ marginBottom: '12px' }}>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>
+              Personas confirmadas
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '28px' }}>
+              <div className="info-card" style={{ textAlign: 'left', background: 'var(--olive)', border: '1px solid var(--olive)' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>
+                  Total personas
+                </p>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: 300, color: '#fff', lineHeight: 1 }}>
+                  {stats.confirmedTotal}
+                </p>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '6px' }}>
+                  de {stats.confirmed} invitaciones
+                </p>
+              </div>
+
+              <div className="info-card" style={{ textAlign: 'left' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>
+                  Adultos
+                </p>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: 300, color: '#4a6741', lineHeight: 1 }}>
+                  {stats.confirmedAdults}
+                </p>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', marginTop: '6px' }}>
+                  asistirán
+                </p>
+              </div>
+
+              <div className="info-card" style={{ textAlign: 'left' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>
+                  Niños
+                </p>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: 300, color: 'var(--rose)', lineHeight: 1 }}>
+                  {stats.confirmedChildren}
+                </p>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', marginTop: '6px' }}>
+                  máx. por invitación
+                </p>
+              </div>
+
+              <div className="info-card" style={{ textAlign: 'left' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>
+                  No asisten
+                </p>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: 300, color: 'var(--muted)', lineHeight: 1 }}>
+                  {stats.declined}
+                </p>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', marginTop: '6px' }}>
+                  invitaciones
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Secondary stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '28px' }}>
             <StatCard label="Total invitados" value={stats.total} />
-            <StatCard label="Confirmados" value={stats.confirmed} color="#4a6741" sub={`+ ${stats.plusOnes} acompañantes`} />
-            <StatCard label="Asistirán" value={totalAttending} sub="personas en total" color="var(--olive)" />
-            <StatCard label="No asisten" value={stats.declined} color="var(--muted)" />
             <StatCard label="Sin respuesta" value={stats.pending} color="var(--rose)" />
             <StatCard label="Fotos en álbum" value={stats.photos} />
           </div>
