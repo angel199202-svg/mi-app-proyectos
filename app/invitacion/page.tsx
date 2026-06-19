@@ -15,6 +15,8 @@ type Guest = {
   rsvp_attending: boolean | null
   rsvp_plus_one: boolean | null
   rsvp_plus_one_name: string | null
+  rsvp_adults: number | null
+  rsvp_children: number | null
   rsvp_message: string | null
 }
 
@@ -63,7 +65,7 @@ function InvitacionContent() {
 
     const { data, error: err } = await supabase
       .from('wedding_guests')
-      .select('id, name, code, max_adults, max_children, rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, rsvp_message')
+      .select('id, name, code, max_adults, max_children, rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, rsvp_adults, rsvp_children, rsvp_message')
       .eq('code', raw.trim().toUpperCase())
       .single()
 
@@ -81,7 +83,8 @@ function InvitacionContent() {
       const names = data.rsvp_plus_one_name
         ? data.rsvp_plus_one_name.split(',').map((s: string) => s.trim())
         : []
-      setAdultsCount(1 + names.length)
+      setAdultsCount(data.rsvp_adults ?? 1 + names.length)
+      setChildrenCount(data.rsvp_children ?? 0)
       setCompanionNames(names)
       setMessage(data.rsvp_message ?? '')
       setStep('done')
@@ -111,6 +114,8 @@ function InvitacionContent() {
         rsvp_attending:     attending,
         rsvp_plus_one:      hasOthers,
         rsvp_plus_one_name: hasOthers && filledNames.length > 0 ? filledNames.join(', ') : null,
+        rsvp_adults:        attending ? adultsCount : null,
+        rsvp_children:      attending ? childrenCount : null,
         rsvp_dietary:       dietary.trim() || null,
         rsvp_message:       message.trim() || null,
         rsvp_at:            new Date().toISOString(),
@@ -421,7 +426,15 @@ function InvitacionContent() {
                 </p>
               )}
             </div>
-            <Link href="/" className="btn-outline">Volver al inicio</Link>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+              <Link href="/" className="btn-outline">Volver al inicio</Link>
+              <button
+                onClick={() => { setStep('form') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--muted)', letterSpacing: '0.08em', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+              >
+                Modificar mi respuesta
+              </button>
+            </div>
           </div>
         )}
       </div>

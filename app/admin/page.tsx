@@ -43,7 +43,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function load() {
       const [{ data: guests }, { count: photoCount }] = await Promise.all([
-        supabase.from('wedding_guests').select('rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, max_adults, max_children'),
+        supabase.from('wedding_guests').select('rsvp_attending, rsvp_plus_one, rsvp_plus_one_name, max_adults, max_children, rsvp_adults, rsvp_children'),
         supabase.from('wedding_photos').select('id', { count: 'exact', head: true }),
       ])
 
@@ -51,13 +51,17 @@ export default function AdminDashboard() {
       const confirmedGuests = g.filter((x) => x.rsvp_attending === true)
 
       const confirmedAdults = confirmedGuests.reduce((s, x) => {
+        if (x.rsvp_adults != null) return s + x.rsvp_adults
         const extras = x.rsvp_plus_one_name
           ? x.rsvp_plus_one_name.split(',').filter((n: string) => n.trim()).length
           : 0
         return s + 1 + extras
       }, 0)
 
-      const confirmedChildren = confirmedGuests.reduce((s, x) => s + (x.max_children ?? 0), 0)
+      const confirmedChildren = confirmedGuests.reduce((s, x) => {
+        if (x.rsvp_children != null) return s + x.rsvp_children
+        return s + (x.max_children ?? 0)
+      }, 0)
 
       setStats({
         total:            g.length,

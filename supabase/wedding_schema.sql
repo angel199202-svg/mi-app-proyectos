@@ -75,6 +75,16 @@ create policy "auth delete photos"
 --
 -- Or create it via Dashboard > Storage > New bucket (enable "Public bucket")
 
+-- ─── Migration: confirmed adults/children count ───────────────────
+-- Run once in Supabase SQL editor if table already exists:
+--
+--   ALTER TABLE public.wedding_guests
+--   ADD COLUMN IF NOT EXISTS rsvp_adults   integer,
+--   ADD COLUMN IF NOT EXISTS rsvp_children integer;
+--
+-- (These columns are null for guests who confirmed before this change.
+--  They can re-confirm via "Modificar mi respuesta" on the RSVP page.)
+
 -- ─── Sample guest codes ───────────────────────────────────────────
 -- INSERT INTO public.wedding_guests (code, name, allow_plus_one)
 -- VALUES
