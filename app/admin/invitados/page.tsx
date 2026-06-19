@@ -287,6 +287,13 @@ export default function InvitadosPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <Link href="/admin/imprimir" target="_blank" className="btn-outline" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginRight: '6px' }}>
+              <rect x="2" y="4" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M4 4V2h6v2M4 11v1h6v-1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            Imprimir lista
+          </Link>
           <button className="btn-outline" onClick={openBulk}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginRight: '6px' }}>
               <path d="M7 1v8M3 5l4-4 4 4M1 11h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
